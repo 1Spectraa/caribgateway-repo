@@ -120,7 +120,7 @@ export type BusinessMetadata =
 // Table row types  (mirrors each SQL table)
 // ---------------------------------------------------------------------------
 
-export interface CountryRow {
+export type CountryRow = {
   id: string;
   name: string;
   iso_code: string;
@@ -136,9 +136,9 @@ export interface CountryRow {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface DestinationRow {
+export type DestinationRow = {
   id: string;
   country_id: string;
   name: string;
@@ -155,9 +155,9 @@ export interface DestinationRow {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface CategoryRow {
+export type CategoryRow = {
   id: string;
   parent_id: string | null;
   name: string;
@@ -169,9 +169,9 @@ export interface CategoryRow {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface BusinessRow {
+export type BusinessRow = {
   id: string;
   destination_id: string;
   category_id: string;
@@ -204,9 +204,9 @@ export interface BusinessRow {
   metadata: BusinessMetadata;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface BusinessImageRow {
+export type BusinessImageRow = {
   id: string;
   business_id: string;
   url: string;
@@ -220,22 +220,22 @@ export interface BusinessImageRow {
   mime_type: string | null;
   file_size: number | null;
   created_at: string;
-}
+};
 
-export interface TagRow {
+export type TagRow = {
   id: string;
   name: string;
   slug: string;
   color: string;
   is_active: boolean;
   created_at: string;
-}
+};
 
-export interface BusinessTagRow {
+export type BusinessTagRow = {
   business_id: string;
   tag_id: string;
   created_at: string;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Insert / Update types
@@ -246,8 +246,21 @@ export type CountryInsert = Omit<CountryRow, "id" | "created_at" | "updated_at">
 };
 export type CountryUpdate = Partial<CountryInsert>;
 
-export type DestinationInsert = Omit<DestinationRow, "id" | "created_at" | "updated_at"> & {
+export type DestinationInsert = {
   id?: string;
+  country_id: string;
+  name: string;
+  slug: string;
+  destination_type?: DestinationType;
+  short_description?: string | null;
+  description?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  hero_image_url?: string | null;
+  is_featured?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  metadata?: Record<string, unknown>;
 };
 export type DestinationUpdate = Partial<DestinationInsert>;
 
@@ -256,13 +269,53 @@ export type CategoryInsert = Omit<CategoryRow, "id" | "created_at" | "updated_at
 };
 export type CategoryUpdate = Partial<CategoryInsert>;
 
-export type BusinessInsert = Omit<BusinessRow, "id" | "created_at" | "updated_at"> & {
+export type BusinessInsert = {
   id?: string;
+  destination_id: string;
+  category_id: string;
+  business_type: BusinessType;
+  owner_id?: string | null;
+  name: string;
+  slug: string;
+  short_description?: string | null;
+  description?: string | null;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  social_links?: SocialLinks;
+  price_range?: PriceRange | null;
+  hours_of_operation?: HoursOfOperation;
+  amenities?: string[];
+  features?: string[];
+  is_verified?: boolean;
+  is_featured?: boolean;
+  is_active?: boolean;
+  status?: PublishStatus;
+  avg_rating?: number | null;
+  review_count?: number;
+  metadata?: BusinessMetadata;
 };
 export type BusinessUpdate = Partial<BusinessInsert>;
 
-export type BusinessImageInsert = Omit<BusinessImageRow, "id" | "created_at"> & {
+export type BusinessImageInsert = {
   id?: string;
+  business_id: string;
+  url: string;
+  storage_path?: string | null;
+  alt_text?: string | null;
+  caption?: string | null;
+  is_primary?: boolean;
+  sort_order?: number;
+  width?: number | null;
+  height?: number | null;
+  mime_type?: string | null;
+  file_size?: number | null;
 };
 
 export type TagInsert = Omit<TagRow, "id" | "created_at"> & { id?: string };
@@ -278,38 +331,46 @@ export interface Database {
         Row: CountryRow;
         Insert: CountryInsert;
         Update: CountryUpdate;
+        Relationships: [];
       };
       destinations: {
         Row: DestinationRow;
         Insert: DestinationInsert;
         Update: DestinationUpdate;
+        Relationships: [];
       };
       categories: {
         Row: CategoryRow;
         Insert: CategoryInsert;
         Update: CategoryUpdate;
+        Relationships: [];
       };
       businesses: {
         Row: BusinessRow;
         Insert: BusinessInsert;
         Update: BusinessUpdate;
+        Relationships: [];
       };
       business_images: {
         Row: BusinessImageRow;
         Insert: BusinessImageInsert;
         Update: Partial<BusinessImageInsert>;
+        Relationships: [];
       };
       tags: {
         Row: TagRow;
         Insert: TagInsert;
         Update: Partial<TagInsert>;
+        Relationships: [];
       };
       business_tags: {
         Row: BusinessTagRow;
         Insert: Omit<BusinessTagRow, "created_at">;
-        Update: never;
+        Update: Partial<Omit<BusinessTagRow, "created_at">>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Enums: {
       business_type: BusinessType;
       destination_type: DestinationType;
