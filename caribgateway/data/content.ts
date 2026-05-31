@@ -1,4 +1,4 @@
-import type { Destination, Category, NavLink } from "@/lib/types";
+import type { Destination, Category, NavLink } from "@/lib/ui-types";
 
 export const navLinks: NavLink[] = [
   { label: "Destinations", href: "#destinations" },
