@@ -70,6 +70,13 @@ export default function CTASection() {
             View All Businesses
           </Link>
         </div>
+        {/* Decorative bottom note */}
+        <p className="text-center text-brand-slate text-sm mt-12">
+          More experiences added every week.{" "}
+          <Link href="#" className="text-brand-teal font-medium hover:underline">
+            Subscribe for updates
+          </Link>
+        </p>
 
         {/* Trust indicators */}
         <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
