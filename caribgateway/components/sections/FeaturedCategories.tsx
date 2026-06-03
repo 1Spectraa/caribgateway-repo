@@ -51,13 +51,7 @@ export default function FeaturedCategories() {
           ))}
         </div>
 
-        {/* Decorative bottom note */}
-        <p className="text-center text-brand-slate text-sm mt-12">
-          More experiences added every week.{" "}
-          <Link href="#" className="text-brand-teal font-medium hover:underline">
-            Subscribe for updates
-          </Link>
-        </p>
+        
       </div>
     </section>
   );
