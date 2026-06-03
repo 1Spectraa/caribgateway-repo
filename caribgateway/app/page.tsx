@@ -4,7 +4,7 @@ import FeaturedCategories from "@/components/sections/FeaturedCategories";
 import CTASection from "@/components/sections/CTASection";
 
 export default function Home() {
-  return (
+  return(
     <>
       <HeroSection />
       <FeaturedDestinations />
