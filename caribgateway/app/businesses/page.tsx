@@ -140,7 +140,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
             Explore & Discover
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight">
-            Caribbean Businesses
+            Caribbean Experiences
           </h1>
           <p className="text-white/70 max-w-xl mx-auto text-lg leading-relaxed">
             Hotels, restaurants, attractions, tours, and more — hand-picked
