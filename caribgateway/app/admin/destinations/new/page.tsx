@@ -5,8 +5,7 @@ export default async function NewDestinationPage() {
   const supabase = createServerClient();
   const { data: countries } = await supabase
     .from("countries")
-    .select("*")
-    .eq("is_active", true)
+    .select("id, name, flag_emoji")
     .order("name");
 
   return (

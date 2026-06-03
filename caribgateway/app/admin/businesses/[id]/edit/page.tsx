@@ -25,14 +25,12 @@ export default async function EditBusinessPage({ params }: Props) {
   ] = await Promise.all([
     supabase
       .from("destinations")
-      .select("id, name, country_id, slug, destination_type, short_description, description, latitude, longitude, hero_image_url, is_featured, is_active, sort_order, metadata, created_at, updated_at")
-      .eq("is_active", true)
+      .select("id, name, country_id")
       .order("name"),
     supabase.from("countries").select("id, name"),
     supabase
       .from("categories")
-      .select("*")
-      .eq("is_active", true)
+      .select("id, name, slug, parent_id, sort_order")
       .order("sort_order"),
   ]);
 

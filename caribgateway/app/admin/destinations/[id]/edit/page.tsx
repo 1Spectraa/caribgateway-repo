@@ -14,8 +14,7 @@ export default async function EditDestinationPage({ params }: Props) {
     supabase.from("destinations").select("*").eq("id", id).single(),
     supabase
       .from("countries")
-      .select("*")
-      .eq("is_active", true)
+      .select("id, name, flag_emoji")
       .order("name"),
   ]);
 
