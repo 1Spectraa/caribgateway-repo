@@ -6,10 +6,16 @@ import {
   updateDestination,
   type ActionState,
 } from "@/lib/actions/destinations";
-import type { CountryRow, DestinationRow } from "@/lib/database.types";
+import type { DestinationRow } from "@/lib/database.types";
+
+type CountryOption = {
+  id: string;
+  name: string;
+  flag_emoji: string | null;
+};
 
 interface Props {
-  countries: CountryRow[];
+  countries: CountryOption[];
   destination?: DestinationRow;
 }
 

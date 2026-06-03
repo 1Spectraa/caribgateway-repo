@@ -6,16 +6,25 @@ import {
   updateBusiness,
   type ActionState,
 } from "@/lib/actions/businesses";
-import type {
-  BusinessRow,
-  CategoryRow,
-  DestinationRow,
-  SocialLinks,
-} from "@/lib/database.types";
+import type { BusinessRow, SocialLinks } from "@/lib/database.types";
+
+type DestinationOption = {
+  id: string;
+  name: string;
+  country_id: string;
+  country_name: string;
+};
+
+type CategoryOption = {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+};
 
 interface Props {
-  destinations: (DestinationRow & { country_name: string })[];
-  categories: CategoryRow[];
+  destinations: DestinationOption[];
+  categories: CategoryOption[];
   business?: BusinessRow;
 }
 

@@ -4,18 +4,22 @@ import BusinessForm from "@/components/admin/BusinessForm";
 export default async function NewBusinessPage() {
   const supabase = createServerClient();
 
-  const [{ data: destinations }, { data: countries }, { data: categories }] =
-    await Promise.all([
-      supabase
-        .from("destinations")
-        .select("id, name, country_id")
-        .order("name"),
-      supabase.from("countries").select("id, name"),
-      supabase
-        .from("categories")
-        .select("id, name, slug, parent_id, sort_order")
-        .order("sort_order"),
-    ]);
+  const [
+    { data: destinations, error: destErr },
+    { data: countries },
+    { data: categories, error: catErr },
+  ] = await Promise.all([
+    supabase.from("destinations").select("id, name, country_id").order("name"),
+    supabase.from("countries").select("id, name"),
+    supabase
+      .from("categories")
+      .select("id, name, slug, parent_id, sort_order")
+      .order("sort_order"),
+  ]);
+
+  if (destErr) console.error("[admin/businesses/new] destinations error:", destErr);
+  if (catErr) console.error("[admin/businesses/new] categories error:", catErr);
+  console.log("[admin/businesses/new] destinations:", destinations?.length ?? 0, "categories:", categories?.length ?? 0);
 
   const countryMap = Object.fromEntries(
     (countries ?? []).map((c) => [c.id, c.name]),
