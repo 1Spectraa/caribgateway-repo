@@ -72,7 +72,7 @@ export default function CTASection() {
         </div>
         {/* Decorative bottom note */}
         <p className="text-center text-brand-slate text-sm mt-12">
-          More experiences added every week.{" "}
+          More experiences coming soon!.{" "}
           <Link href="#" className="text-brand-teal font-medium hover:underline">
             Subscribe for updates
           </Link>
