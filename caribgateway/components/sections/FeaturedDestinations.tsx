@@ -92,7 +92,7 @@ export default function FeaturedDestinations() {
         {/* View all CTA */}
         <div className="text-center mt-14">
           <Link
-            href="#"
+            href="/destinations"
             className="inline-flex items-center gap-2 border-2 border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white font-semibold px-8 py-3 rounded-full transition-all"
           >
             View All Destinations

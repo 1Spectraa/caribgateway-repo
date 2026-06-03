@@ -80,7 +80,7 @@ export default function Navbar() {
               Sign In
             </Link>
             <Link
-              href="#cta"
+              href="/destinations"
               className="bg-brand-coral hover:bg-brand-coral-dark text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-sm"
             >
               Start Exploring

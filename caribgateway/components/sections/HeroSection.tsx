@@ -75,14 +75,14 @@ export default function HeroSection() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="#destinations"
+            href="/destinations"
             className="bg-brand-coral hover:bg-brand-coral-dark text-white font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 shadow-lg w-full sm:w-auto"
             style={{ boxShadow: "0 8px 32px rgba(243,126,91,0.35)" }}
           >
             Explore Destinations
           </Link>
           <Link
-            href="#categories"
+            href="/businesses"
             className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-full border border-white/30 transition-all hover:scale-105 backdrop-blur-sm w-full sm:w-auto"
           >
             View Experiences

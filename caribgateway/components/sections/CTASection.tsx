@@ -57,17 +57,17 @@ export default function CTASection() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="#destinations"
+            href="/destinations"
             className="bg-brand-coral hover:bg-brand-coral-dark text-white font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 w-full sm:w-auto"
             style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}
           >
             Explore Destinations
           </Link>
           <Link
-            href="#"
+            href="/businesses"
             className="bg-white text-brand-navy hover:bg-gray-100 font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 w-full sm:w-auto"
           >
-            Learn More About Us
+            View All Businesses
           </Link>
         </div>
 
