@@ -1,9 +1,9 @@
 import type { Destination, Category, NavLink } from "@/lib/ui-types";
 
 export const navLinks: NavLink[] = [
-  { label: "Destinations", href: "#destinations" },
-  { label: "Experiences", href: "#categories" },
-  { label: "Hotels", href: "#" },
+  { label: "Destinations", href: "/destinations" },
+  { label: "Experiences", href: "/businesses" },
+  { label: "Hotels", href: "/businesses?type=hotel" },
   { label: "About", href: "#" },
 ];
 

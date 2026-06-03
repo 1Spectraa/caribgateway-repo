@@ -43,3 +43,14 @@ export function createServerClient() {
     auth: { persistSession: false },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Public server client
+// Uses the anon key — subject to Row Level Security policies.
+// Safe to use in public Server Components; never persists session data.
+// ---------------------------------------------------------------------------
+export function createPublicServerClient() {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false },
+  });
+}
