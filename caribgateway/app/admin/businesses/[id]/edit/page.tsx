@@ -49,12 +49,20 @@ export default async function EditBusinessPage({ params }: Props) {
         <h1 className="text-xl font-bold text-gray-900">
           Edit: {business.name}
         </h1>
-        <a
-          href={`/admin/businesses/${id}/images`}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          Manage Images →
-        </a>
+        <div className="flex items-center gap-4">
+          <a
+            href={`/admin/businesses/${id}/services`}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Services & Pricing →
+          </a>
+          <a
+            href={`/admin/businesses/${id}/images`}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Manage Images →
+          </a>
+        </div>
       </div>
       <div className="bg-white border border-gray-200 rounded p-6">
         <BusinessForm

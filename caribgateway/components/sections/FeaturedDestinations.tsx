@@ -24,7 +24,7 @@ export default function FeaturedDestinations() {
           {destinations.map((dest) => (
             <Link
               key={dest.id}
-              href="#"
+              href={`/destinations/${dest.slug}`}
               className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
             >
               {/* Card image area */}

@@ -10,8 +10,10 @@
  */
 
 // ---------------------------------------------------------------------------
-// Enum literals (mirrors 0002_enums.sql)
+// Enum literals (mirrors SQL migrations)
 // ---------------------------------------------------------------------------
+
+export type UserRole = "user" | "business_owner" | "admin";
 
 export type BusinessType =
   | "hotel"
@@ -237,6 +239,42 @@ export type BusinessTagRow = {
   created_at: string;
 };
 
+export type ProfileRow = {
+  id: string;
+  role: UserRole;
+  full_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BusinessServiceRow = {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  price_unit: "fixed" | "per_person" | "per_night" | "per_hour" | "from";
+  currency: string;
+  duration_minutes: number | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+};
+
+export type BusinessServiceInsert = {
+  id?: string;
+  business_id: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  price_unit?: BusinessServiceRow["price_unit"];
+  currency?: string;
+  duration_minutes?: number | null;
+  is_active?: boolean;
+  sort_order?: number;
+};
+
 // ---------------------------------------------------------------------------
 // Insert / Update types
 // ---------------------------------------------------------------------------
@@ -369,6 +407,18 @@ export interface Database {
         Update: Partial<Omit<BusinessTagRow, "created_at">>;
         Relationships: [];
       };
+      profiles: {
+        Row: ProfileRow;
+        Insert: Omit<ProfileRow, "created_at" | "updated_at">;
+        Update: Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      business_services: {
+        Row: BusinessServiceRow;
+        Insert: BusinessServiceInsert;
+        Update: Partial<BusinessServiceInsert>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Enums: {
@@ -376,6 +426,7 @@ export interface Database {
       destination_type: DestinationType;
       price_range: PriceRange;
       publish_status: PublishStatus;
+      user_role: UserRole;
     };
     Functions: {
       slugify: {

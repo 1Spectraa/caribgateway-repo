@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createPublicServerClient } from "@/lib/supabase";
 import BusinessCard from "@/components/businesses/BusinessCard";
-import type { SocialLinks } from "@/lib/database.types";
+import type { SocialLinks, BusinessServiceRow } from "@/lib/database.types";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -93,6 +93,7 @@ export default async function BusinessDetailPage({ params }: Props) {
     { data: images },
     { data: destination },
     { data: relatedBusinesses },
+    { data: services },
   ] = await Promise.all([
     supabase
       .from("business_images")
@@ -114,6 +115,12 @@ export default async function BusinessDetailPage({ params }: Props) {
       .eq("is_active", true)
       .neq("id", business.id)
       .limit(3),
+    supabase
+      .from("business_services")
+      .select("*")
+      .eq("business_id", business.id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const imageList = images ?? [];
@@ -299,6 +306,42 @@ export default async function BusinessDetailPage({ params }: Props) {
                   </div>
                 </section>
               )}
+
+              {/* Services & Pricing */}
+              {services && services.length > 0 && (
+                <section>
+                  <h2 className="text-xl font-bold text-brand-navy mb-4">Services &amp; Pricing</h2>
+                  <div className="rounded-xl border border-gray-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="text-left px-4 py-3 font-semibold text-gray-600">Service</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-600">Price</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {services.map((svc) => (
+                          <tr key={svc.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <p className="font-medium text-gray-900">{svc.name}</p>
+                              {svc.description && (
+                                <p className="text-gray-400 text-xs mt-0.5">{svc.description}</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold text-brand-coral whitespace-nowrap">
+                              <ServicePrice service={svc} />
+                            </td>
+                            <td className="px-4 py-3 text-right text-gray-400 whitespace-nowrap hidden sm:table-cell">
+                              {svc.duration_minutes ? `${svc.duration_minutes} min` : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* Right: sidebar */}
@@ -420,6 +463,24 @@ export default async function BusinessDetailPage({ params }: Props) {
       )}
     </>
   );
+}
+
+function ServicePrice({ service }: { service: BusinessServiceRow }) {
+  if (service.price === null) return <span className="text-gray-400 font-normal">Contact for price</span>;
+  const formatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: service.currency || "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(service.price);
+  const suffix: Record<string, string> = {
+    per_person: " / person",
+    per_night:  " / night",
+    per_hour:   " / hour",
+    fixed:      "",
+    from:       "",
+  };
+  return <>{service.price_unit === "from" ? `From ${formatted}` : `${formatted}${suffix[service.price_unit] ?? ""}`}</>;
 }
 
 function ChevronRight() {

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { loginAdmin, type AuthState } from "@/lib/actions/auth";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
     loginAdmin,
     null,
@@ -26,13 +26,28 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              required
+              autoFocus
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
             <input
               name="password"
               type="password"
               required
-              autoFocus
+              autoComplete="current-password"
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>

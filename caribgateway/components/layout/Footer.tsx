@@ -1,28 +1,33 @@
 import Link from "next/link";
 
-const footerLinks = {
-  Destinations: [
-    "Barbados",
-    "Jamaica",
-    "Trinidad & Tobago",
-    "St. Lucia",
-    "Antigua",
-    "Cayman Islands",
-  ],
-  Experiences: [
-    "Beach Escapes",
-    "Adventure Sports",
-    "Cultural Tours",
-    "Luxury Stays",
-    "Water Sports",
-  ],
-  Company: ["About Us", "Blog", "Careers", "Press", "Contact"],
-};
+const destinationLinks = [
+  { label: "Barbados",          href: "/destinations/barbados" },
+  { label: "Jamaica",           href: "/destinations/jamaica" },
+  { label: "Trinidad & Tobago", href: "/destinations/trinidad" },
+  { label: "St. Lucia",         href: "/destinations/saint-lucia" },
+  { label: "Antigua",           href: "/destinations/antigua" },
+  { label: "Cayman Islands",    href: "/destinations/grand-cayman" },
+];
+
+const experienceLinks = [
+  { label: "Beach Escapes",    href: "/businesses?category=beaches-nature" },
+  { label: "Adventure Sports", href: "/businesses?category=adventure-activities" },
+  { label: "Cultural Tours",   href: "/businesses?category=cultural-heritage-tours" },
+  { label: "Luxury Stays",     href: "/businesses?category=all-inclusive-resorts" },
+  { label: "Water Sports",     href: "/businesses?category=water-sports-diving" },
+];
+
+const companyLinks = [
+  { label: "About Us", href: "#" },
+  { label: "Blog",     href: "#" },
+  { label: "Careers",  href: "#" },
+  { label: "Press",    href: "#" },
+  { label: "Contact",  href: "#" },
+];
 
 const socialLinks = [
   {
     name: "X (Twitter)",
-    abbr: "X",
     href: "#",
     icon: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
@@ -32,7 +37,6 @@ const socialLinks = [
   },
   {
     name: "Instagram",
-    abbr: "IG",
     href: "#",
     icon: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
@@ -42,7 +46,6 @@ const socialLinks = [
   },
   {
     name: "Facebook",
-    abbr: "FB",
     href: "#",
     icon: (
       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
@@ -61,11 +64,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4 group w-fit">
               <div className="w-9 h-9 bg-brand-teal rounded-xl flex items-center justify-center group-hover:bg-brand-teal-dark transition-colors">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-5 h-5 text-white"
-                  fill="currentColor"
-                >
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
                   <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
                 </svg>
@@ -91,26 +90,62 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h3 className="font-semibold text-white text-xs uppercase tracking-widest mb-4">
-                {title}
-              </h3>
-              <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link}>
-                    <Link
-                      href="#"
-                      className="text-brand-slate hover:text-white text-sm transition-colors"
-                    >
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Destinations */}
+          <div>
+            <h3 className="font-semibold text-white text-xs uppercase tracking-widest mb-4">
+              Destinations
+            </h3>
+            <ul className="space-y-2.5">
+              {destinationLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-brand-slate hover:text-white text-sm transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Experiences */}
+          <div>
+            <h3 className="font-semibold text-white text-xs uppercase tracking-widest mb-4">
+              Experiences
+            </h3>
+            <ul className="space-y-2.5">
+              {experienceLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-brand-slate hover:text-white text-sm transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="font-semibold text-white text-xs uppercase tracking-widest mb-4">
+              Company
+            </h3>
+            <ul className="space-y-2.5">
+              {companyLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-brand-slate hover:text-white text-sm transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Bottom bar */}
@@ -119,17 +154,15 @@ export default function Footer() {
             © 2026 CaribGateway. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(
-              (item) => (
-                <Link
-                  key={item}
-                  href="#"
-                  className="text-brand-slate hover:text-white text-xs transition-colors"
-                >
-                  {item}
-                </Link>
-              )
-            )}
+            {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((item) => (
+              <Link
+                key={item}
+                href="#"
+                className="text-brand-slate hover:text-white text-xs transition-colors"
+              >
+                {item}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

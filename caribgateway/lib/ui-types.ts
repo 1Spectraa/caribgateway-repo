@@ -1,6 +1,7 @@
 export interface Destination {
   id: number;
   name: string;
+  slug: string;
   tagline: string;
   country: string;
   gradientFrom: string;

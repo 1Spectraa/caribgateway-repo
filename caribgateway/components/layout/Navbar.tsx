@@ -72,7 +72,7 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
             <Link
-              href="#"
+              href="/login"
               className={`text-sm font-medium transition-colors hover:text-brand-teal ${
                 scrolled ? "text-brand-navy" : "text-white/80"
               }`}

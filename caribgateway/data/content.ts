@@ -3,7 +3,6 @@ import type { Destination, Category, NavLink } from "@/lib/ui-types";
 export const navLinks: NavLink[] = [
   { label: "Destinations", href: "/destinations" },
   { label: "Experiences", href: "/businesses" },
-  { label: "Hotels", href: "/businesses?type=hotel" },
   { label: "About", href: "#" },
 ];
 
@@ -11,6 +10,7 @@ export const destinations: Destination[] = [
   {
     id: 1,
     name: "Barbados",
+    slug: "barbados",
     tagline: "The Gem of the Caribbean",
     country: "Barbados",
     gradientFrom: "#1f476c",
@@ -23,6 +23,7 @@ export const destinations: Destination[] = [
   {
     id: 2,
     name: "Jamaica",
+    slug: "jamaica",
     tagline: "Island of Springs",
     country: "Jamaica",
     gradientFrom: "#1f8a8a",
@@ -35,6 +36,7 @@ export const destinations: Destination[] = [
   {
     id: 3,
     name: "Trinidad & Tobago",
+    slug: "trinidad",
     tagline: "Land of Steel Pan",
     country: "T&T",
     gradientFrom: "#163352",
@@ -47,6 +49,7 @@ export const destinations: Destination[] = [
   {
     id: 4,
     name: "St. Lucia",
+    slug: "saint-lucia",
     tagline: "Helen of the West Indies",
     country: "St. Lucia",
     gradientFrom: "#0d6b6b",
@@ -59,6 +62,7 @@ export const destinations: Destination[] = [
   {
     id: 5,
     name: "Antigua",
+    slug: "antigua",
     tagline: "365 Beaches to Discover",
     country: "Antigua & Barbuda",
     gradientFrom: "#c4643e",
@@ -71,6 +75,7 @@ export const destinations: Destination[] = [
   {
     id: 6,
     name: "Cayman Islands",
+    slug: "grand-cayman",
     tagline: "World-Class Diving",
     country: "Cayman Islands",
     gradientFrom: "#1f8a8a",
