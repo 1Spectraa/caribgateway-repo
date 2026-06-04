@@ -69,8 +69,15 @@ export default function AdminSidebar() {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-gray-700">
+        {/* View site + Logout */}
+        <div className="px-3 py-4 border-t border-gray-700 space-y-1">
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <span>🌐</span> View Site
+          </Link>
           <form action={logoutAdmin}>
             <button
               type="submit"
