@@ -6,8 +6,8 @@ const footerLinks = {
     "Jamaica",
     "Trinidad & Tobago",
     "St. Lucia",
-    "Antigua",
-    "Cayman Islands",
+    "Antigua & Barbuda",
+    "St. Kitts & Nevis",
   ],
   Experiences: [
     "Beach Escapes",
@@ -16,7 +16,7 @@ const footerLinks = {
     "Luxury Stays",
     "Water Sports",
   ],
-  Company: ["About Us", "Blog", "Careers", "Press", "Contact"],
+  Company: ["About Us", "Blog", "Contact"],
 };
 
 const socialLinks = [
