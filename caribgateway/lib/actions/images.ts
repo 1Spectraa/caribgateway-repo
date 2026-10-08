@@ -21,7 +21,7 @@ export async function uploadBusinessImage(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
   if (!(await canEditBusiness(auth.staff, businessId))) {
     return { error: "You can only change listings assigned to your account." };
@@ -78,7 +78,7 @@ export async function uploadBusinessImage(
 }
 
 export async function deleteBusinessImage(imageId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
   if (!(await canEditBusiness(auth.staff, businessId))) {
     return { error: "You can only change listings assigned to your account." };
@@ -130,7 +130,7 @@ export async function deleteBusinessImage(imageId: string, businessId: string) {
 }
 
 export async function setPrimaryImage(imageId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
   if (!(await canEditBusiness(auth.staff, businessId))) {
     return { error: "You can only change listings assigned to your account." };

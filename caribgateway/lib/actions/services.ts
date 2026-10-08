@@ -11,7 +11,7 @@ export async function createService(
   _: ServiceActionState,
   formData: FormData,
 ): Promise<ServiceActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
   if (!(await canEditBusiness(auth.staff, businessId))) {
     return { error: "You can only change listings assigned to your account." };
@@ -44,7 +44,7 @@ export async function createService(
 }
 
 export async function deleteService(serviceId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
 
   const supabase = createServerClient();

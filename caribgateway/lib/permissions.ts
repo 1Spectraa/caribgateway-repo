@@ -15,7 +15,7 @@ export const PERMISSIONS = {
   "listings.create": {
     label: "Create listings",
     description:
-      "Add new businesses and accommodations. Without 'Edit any listing', a new listing belongs to its creator.",
+      "Add new businesses and accommodations. Without 'Edit any listing', you can edit the listings you create.",
     group: "Listings",
   },
   "listings.manage_all": {

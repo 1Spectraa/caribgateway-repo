@@ -160,7 +160,7 @@ export async function updateBusiness(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
   const { staff } = auth;
 

@@ -89,12 +89,12 @@ export async function authorize(
 }
 
 /**
- * Whether this person may change one business: any business with
- * 'Edit any listing', or one they own with 'Edit own listings'.
+ * Whether this person may change one business: any business with 'Edit any listing',
+ * or one they own with 'Edit own listings' or 'Create listings' (a creator edits what they create).
  */
 export async function canEditBusiness(staff: Staff, businessId: string): Promise<boolean> {
   if (can(staff, "listings.manage_all")) return true;
-  if (!can(staff, "listings.manage_own")) return false;
+  if (!can(staff, "listings.manage_own") && !can(staff, "listings.create")) return false;
 
   const { data } = await createServerClient()
     .from("businesses")
