@@ -10,6 +10,8 @@ interface DestinationCardProps {
     hero_image_url: string | null;
     is_featured: boolean;
     country_name: string;
+    /** When set, the country name links to its country page. */
+    country_slug?: string | null;
   };
 }
 
@@ -22,13 +24,19 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function DestinationCard({ destination }: DestinationCardProps) {
-  const { name, slug, destination_type, short_description, hero_image_url, is_featured, country_name } = destination;
+  const {
+    name,
+    slug,
+    destination_type,
+    short_description,
+    hero_image_url,
+    is_featured,
+    country_name,
+    country_slug,
+  } = destination;
 
   return (
-    <Link
-      href={`/destinations/${slug}`}
-      className="group block rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bg-white hover:-translate-y-0.5"
-    >
+    <div className="group relative block rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bg-white hover:-translate-y-0.5">
       {/* Image area */}
       <div className="relative h-52 overflow-hidden">
         {hero_image_url ? (
@@ -59,15 +67,26 @@ export default function DestinationCard({ destination }: DestinationCardProps) {
 
       {/* Card body */}
       <div className="p-5">
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="font-bold text-brand-navy text-lg leading-snug group-hover:text-brand-teal transition-colors">
+        <h3 className="font-bold text-brand-navy text-lg leading-snug mb-1.5">
+          {/* This link covers the whole card; the country link sits above it. */}
+          <Link
+            href={`/destinations/${slug}`}
+            className="after:absolute after:inset-0 after:content-[''] group-hover:text-brand-teal transition-colors"
+          >
             {name}
-          </h3>
-        </div>
+          </Link>
+        </h3>
 
-        <p className="text-brand-slate text-sm font-medium mb-2.5">
-          {country_name}
-        </p>
+        {country_slug ? (
+          <Link
+            href={`/countries/${country_slug}`}
+            className="relative z-10 inline-block text-brand-teal text-sm font-medium mb-2.5 hover:underline"
+          >
+            {country_name}
+          </Link>
+        ) : (
+          <p className="text-brand-slate text-sm font-medium mb-2.5">{country_name}</p>
+        )}
 
         {short_description && (
           <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
@@ -88,6 +107,6 @@ export default function DestinationCard({ destination }: DestinationCardProps) {
           </svg>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

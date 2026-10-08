@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { HomeDestination } from "@/lib/queries";
 import type { SiteContent } from "@/lib/site-content";
 
-/** Card backgrounds, used in order so neighbouring cards differ. */
+/** Card backgrounds for destinations without a photo, used in order so neighbours differ. */
 const GRADIENTS: Array<[string, string]> = [
   ["#1f476c", "#1f8a8a"],
   ["#1f8a8a", "#0d6b6b"],
@@ -41,33 +41,49 @@ export default function FeaturedDestinations({ copy, destinations }: Props) {
           {destinations.map((dest, i) => {
             const [from, to] = GRADIENTS[i % GRADIENTS.length];
             return (
-              <Link
+              <div
                 key={dest.id}
-                href={`/destinations/${dest.slug}`}
                 className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
               >
                 {/* Card image area */}
                 <div
                   className="h-52 flex items-end relative overflow-hidden"
-                  style={{ background: `linear-gradient(145deg, ${from}, ${to})` }}
+                  style={dest.hero_image_url ? undefined : { background: `linear-gradient(145deg, ${from}, ${to})` }}
                 >
-                  {/* Large emoji watermark */}
-                  {dest.emoji && (
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-500 select-none pointer-events-none">
-                      {dest.emoji}
-                    </span>
+                  {dest.hero_image_url ? (
+                    <img
+                      src={dest.hero_image_url}
+                      alt={dest.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    dest.emoji && (
+                      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-500 select-none pointer-events-none">
+                        {dest.emoji}
+                      </span>
+                    )
                   )}
 
-                  {/* Country badge */}
-                  {dest.country_name && (
-                    <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-sm text-white/90 text-xs font-medium px-2.5 py-1 rounded-full">
-                      {dest.country_name}
-                    </div>
-                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-                  {/* Tags */}
+                  {/* Country badge, linked to the country page */}
+                  {dest.country_name &&
+                    (dest.country_slug ? (
+                      <Link
+                        href={`/countries/${dest.country_slug}`}
+                        className="absolute top-4 right-4 z-10 bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
+                      >
+                        {dest.country_name}
+                      </Link>
+                    ) : (
+                      <div className="absolute top-4 right-4 bg-black/30 backdrop-blur-sm text-white/90 text-xs font-medium px-2.5 py-1 rounded-full">
+                        {dest.country_name}
+                      </div>
+                    ))}
+
+                  {/* Tags. Pass clicks through to the card link. */}
                   {dest.tags.length > 0 && (
-                    <div className="relative z-10 flex gap-1.5 flex-wrap p-4">
+                    <div className="relative z-10 pointer-events-none flex gap-1.5 flex-wrap p-4">
                       {dest.tags.map((tag) => (
                         <span
                           key={tag}
@@ -82,8 +98,14 @@ export default function FeaturedDestinations({ copy, destinations }: Props) {
 
                 {/* Card body */}
                 <div className="p-5">
-                  <h3 className="font-bold text-brand-navy text-xl mb-0.5 group-hover:text-brand-teal transition-colors">
-                    {dest.name}
+                  <h3 className="font-bold text-brand-navy text-xl mb-0.5">
+                    {/* This link covers the whole card; the country badge sits above it. */}
+                    <Link
+                      href={`/destinations/${dest.slug}`}
+                      className="after:absolute after:inset-0 after:content-[''] group-hover:text-brand-teal transition-colors"
+                    >
+                      {dest.name}
+                    </Link>
                   </h3>
                   {dest.tagline && (
                     <p className="text-brand-teal text-sm font-medium mb-3">{dest.tagline}</p>
@@ -111,7 +133,7 @@ export default function FeaturedDestinations({ copy, destinations }: Props) {
                     </svg>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

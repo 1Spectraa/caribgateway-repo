@@ -57,11 +57,12 @@ export default async function DestinationDetailPage({ params }: Props) {
   // Fetch country name
   const { data: country } = await supabase
     .from("countries")
-    .select("name")
+    .select("name, slug")
     .eq("id", destination.country_id)
     .single();
 
   const countryName = country?.name ?? "Caribbean";
+  const countrySlug = country?.slug ?? null;
 
   // Fetch businesses for this destination
   const { data: businesses } = await supabase
@@ -124,7 +125,16 @@ export default async function DestinationDetailPage({ params }: Props) {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white text-center leading-tight mb-3 drop-shadow-lg">
             {destination.name}
           </h1>
-          <p className="text-white/80 text-lg font-medium">{countryName}</p>
+          {countrySlug ? (
+            <Link
+              href={`/countries/${countrySlug}`}
+              className="text-white/80 hover:text-white text-lg font-medium underline underline-offset-4 decoration-white/40 hover:decoration-white transition-colors"
+            >
+              {countryName}
+            </Link>
+          ) : (
+            <p className="text-white/80 text-lg font-medium">{countryName}</p>
+          )}
         </div>
       </div>
 

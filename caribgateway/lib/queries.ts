@@ -102,6 +102,8 @@ export type HomeDestination = {
   name: string;
   slug: string;
   country_name: string;
+  /** Links the country name to its country page. */
+  country_slug: string | null;
   short_description: string | null;
   hero_image_url: string | null;
   tagline: string;
@@ -156,7 +158,7 @@ async function fetchHomepageData(): Promise<{
       .eq("is_featured", true)
       .order("sort_order")
       .limit(6),
-    supabase.from("countries").select("id, name"),
+    supabase.from("countries").select("id, name, slug"),
     supabase
       .from("categories")
       .select("id, name, slug, parent_id, description, icon, color, sort_order, is_featured")
@@ -168,7 +170,7 @@ async function fetchHomepageData(): Promise<{
       .eq("is_active", true),
   ]);
 
-  const countryName = new Map((countries ?? []).map((c) => [c.id, c.name]));
+  const countryById = new Map((countries ?? []).map((c) => [c.id, c]));
 
   const destinations: HomeDestination[] = (destinationRows ?? []).map((d) => {
     const meta = (d.metadata ?? {}) as { tagline?: unknown; emoji?: unknown; tags?: unknown };
@@ -176,7 +178,8 @@ async function fetchHomepageData(): Promise<{
       id: d.id,
       name: d.name,
       slug: d.slug,
-      country_name: countryName.get(d.country_id) ?? "",
+      country_name: countryById.get(d.country_id)?.name ?? "",
+      country_slug: countryById.get(d.country_id)?.slug ?? null,
       short_description: d.short_description,
       hero_image_url: d.hero_image_url,
       tagline: typeof meta.tagline === "string" ? meta.tagline : "",

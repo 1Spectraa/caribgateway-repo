@@ -20,18 +20,20 @@ export default async function DestinationsPage() {
       .select("*")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
-    supabase.from("countries").select("id, name"),
+    supabase.from("countries").select("id, name, slug"),
     getSiteContent(),
   ]);
 
-  const countryMap = Object.fromEntries(
-    (countries ?? []).map((c) => [c.id, c.name])
-  );
+  const countryById = new Map((countries ?? []).map((c) => [c.id, c]));
 
-  const enriched = (destinations ?? []).map((d) => ({
-    ...d,
-    country_name: countryMap[d.country_id] ?? "Caribbean",
-  }));
+  const enriched = (destinations ?? []).map((d) => {
+    const country = countryById.get(d.country_id);
+    return {
+      ...d,
+      country_name: country?.name ?? "Caribbean",
+      country_slug: country?.slug ?? null,
+    };
+  });
 
   const copy = content.page_destinations;
 
