@@ -5,18 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAdmin } from "@/lib/actions/auth";
 
-const navItems = [
-  { label: "Dashboard", href: "/admin", icon: "▦" },
-  { label: "Destinations", href: "/admin/destinations", icon: "🗺" },
-  { label: "Businesses", href: "/admin/businesses", icon: "🏢" },
-  { label: "Accommodations", href: "/admin/accommodations", icon: "🛏" },
-  { label: "Countries", href: "/admin/countries", icon: "🌍" },
-  { label: "Categories", href: "/admin/categories", icon: "🏷" },
-  { label: "Tags", href: "/admin/tags", icon: "#" },
-  { label: "Site Content", href: "/admin/site", icon: "✎" },
-];
+type NavItem = { label: string; href: string; icon: string };
 
-export default function AdminSidebar() {
+/** Sidebar for the admin area. The server passes only the sections this account may open. */
+export default function AdminSidebar({
+  items,
+  staffName,
+}: {
+  items: NavItem[];
+  staffName: string;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -55,8 +53,8 @@ export default function AdminSidebar() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => (
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -74,8 +72,9 @@ export default function AdminSidebar() {
           ))}
         </nav>
 
-        {/* View site + Logout */}
+        {/* Who is signed in, view site, and logout */}
         <div className="px-3 py-4 border-t border-gray-700 space-y-1">
+          <div className="px-3 pb-1 text-xs text-gray-400 truncate">Signed in as {staffName}</div>
           <Link
             href="/"
             onClick={() => setOpen(false)}

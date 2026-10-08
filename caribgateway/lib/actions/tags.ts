@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
+import { authorize } from "@/lib/staff";
 
 export type ActionState = { error: string } | null;
 
@@ -31,6 +32,9 @@ function validate(fields: ReturnType<typeof parseTag>): string | null {
 }
 
 export async function createTag(_: ActionState, formData: FormData): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseTag(formData);
   const problem = validate(fields);
   if (problem) return { error: problem };
@@ -52,6 +56,9 @@ export async function updateTag(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseTag(formData);
   const problem = validate(fields);
   if (problem) return { error: problem };
@@ -75,6 +82,9 @@ export async function deleteTag(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const supabase = createServerClient();
   const { error } = await supabase.from("tags").delete().eq("id", id);
   if (error) return { error: error.message };

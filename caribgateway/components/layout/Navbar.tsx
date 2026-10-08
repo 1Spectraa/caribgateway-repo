@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { LinkItem } from "@/lib/site-content";
 import { logout } from "@/lib/actions/auth";
 
-type CgUser = { name: string; email: string; role: string } | null;
+type CgUser = { name: string; email: string; role: string; admin?: boolean } | null;
 
 const subscribeNone = () => () => {};
 
@@ -106,7 +106,7 @@ export default function Navbar({ links }: { links: LinkItem[] }) {
                 >
                   Hi, {firstName}
                 </span>
-                {user.role === "admin" && (
+                {user.admin && (
                   <Link
                     href="/admin"
                     className={`text-sm font-medium transition-colors hover:text-brand-teal ${
@@ -213,7 +213,7 @@ export default function Navbar({ links }: { links: LinkItem[] }) {
                   <p className="px-3 py-1.5 text-xs text-gray-400">
                     Signed in as <span className="font-medium text-gray-600">{user.name}</span>
                   </p>
-                  {user.role === "admin" && (
+                  {user.admin && (
                     <Link
                       href="/admin"
                       className="block px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-brand-teal hover:bg-gray-50 rounded-lg transition-colors"

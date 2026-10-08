@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getRecordSlugs } from "@/lib/queries";
 import { revalidatePublicSite } from "@/lib/revalidate";
+import { authorize } from "@/lib/staff";
 import {
   brokenRecordLinks,
   describeRecordLinks,
@@ -33,6 +34,9 @@ export async function saveSiteContent(
   _: SiteContentState,
   formData: FormData,
 ): Promise<SiteContentState> {
+  const auth = await authorize("site.content");
+  if ("error" in auth) return auth;
+
   const content: SiteContent = {
     navigation: parseLinks(field(formData, "navigation")),
     footer: {

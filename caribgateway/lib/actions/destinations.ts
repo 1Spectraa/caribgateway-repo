@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
+import { authorize } from "@/lib/staff";
 import type { DestinationType } from "@/lib/database.types";
 
 export type ActionState = { error: string } | null;
@@ -66,6 +67,9 @@ export async function createDestination(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseDestinationForm(formData);
 
   if (!fields.name) return { error: "Name is required." };
@@ -92,6 +96,9 @@ export async function updateDestination(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseDestinationForm(formData);
 
   if (!fields.name) return { error: "Name is required." };

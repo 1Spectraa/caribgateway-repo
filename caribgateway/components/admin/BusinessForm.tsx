@@ -44,6 +44,12 @@ interface Props {
   lockedType?: BusinessType;
   /** Admin page to return to after saving or cancelling. */
   returnTo?: string;
+  /** False for operators: they cannot change the owner or the tags. */
+  canManageAll?: boolean;
+  /** False for accounts without 'Publish and feature': status and visibility flags are hidden. */
+  canPublish?: boolean;
+  /** Accounts that can own this listing. Shown only when canManageAll is true. */
+  owners?: Array<{ id: string; name: string }>;
 }
 
 function toSlug(str: string): string {
@@ -77,6 +83,9 @@ export default function BusinessForm({
   selectedTagIds = [],
   lockedType,
   returnTo = "/admin/businesses",
+  canManageAll = true,
+  canPublish = true,
+  owners = [],
 }: Props) {
   const action = business
     ? updateBusiness.bind(null, business.id)
@@ -238,8 +247,8 @@ export default function BusinessForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <div hidden={!canPublish}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Status
             </label>
@@ -272,6 +281,29 @@ export default function BusinessForm({
               ))}
             </select>
           </div>
+          {canManageAll && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Owner account
+              </label>
+              <select
+                name="owner_id"
+                defaultValue={business?.owner_id ?? ""}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">No owner</option>
+                {owners.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+                {business?.owner_id && !owners.some((o) => o.id === business.owner_id) && (
+                  // Keeps the current owner selected even if the account is not listed (e.g. suspended).
+                  <option value={business.owner_id}>Current owner (not listed)</option>
+                )}
+              </select>
+            </div>
+          )}
         </div>
       </section>
 
@@ -488,7 +520,7 @@ export default function BusinessForm({
 
       {/* ── Flags ──────────────────────────────────── */}
       {/* ── Tags ───────────────────────────────────── */}
-      <section>
+      <section hidden={!canManageAll}>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           Tags
         </h3>
@@ -525,7 +557,7 @@ export default function BusinessForm({
         )}
       </section>
 
-      <section>
+      <section hidden={!canPublish}>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           Visibility
         </h3>

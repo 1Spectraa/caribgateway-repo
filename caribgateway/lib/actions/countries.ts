@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
+import { authorize } from "@/lib/staff";
 
 export type ActionState = { error: string } | null;
 
@@ -52,6 +53,9 @@ export async function createCountry(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseCountry(formData);
   const problem = validate(fields);
   if (problem) return { error: problem };
@@ -72,6 +76,9 @@ export async function updateCountry(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseCountry(formData);
   const problem = validate(fields);
   if (problem) return { error: problem };
@@ -93,6 +100,9 @@ export async function deleteCountry(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const supabase = createServerClient();
   const { error } = await supabase.from("countries").delete().eq("id", id);
   if (error) {

@@ -245,9 +245,24 @@ export type ProfileRow = {
   id: string;
   role: UserRole;
   full_name: string;
+  email: string | null;
+  /** False suspends the account: it cannot sign in or use the admin area. */
+  is_active: boolean;
+  /** Permission keys granted to this account; see lib/permissions.ts. */
+  permissions: string[];
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ProfileInsert = {
+  id: string;
+  role?: UserRole;
+  full_name?: string;
+  email?: string | null;
+  is_active?: boolean;
+  permissions?: string[];
+  avatar_url?: string | null;
 };
 
 export type BusinessServiceRow = {
@@ -422,8 +437,8 @@ export interface Database {
       };
       profiles: {
         Row: ProfileRow;
-        Insert: Omit<ProfileRow, "created_at" | "updated_at">;
-        Update: Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>;
+        Insert: ProfileInsert;
+        Update: Partial<ProfileInsert>;
         Relationships: [];
       };
       business_services: {

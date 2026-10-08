@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
+import { authorize } from "@/lib/staff";
 
 export type ActionState = { error: string } | null;
 
@@ -43,6 +44,9 @@ export async function createCategory(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseCategory(formData);
   const problem = validate(fields);
   if (problem) return { error: problem };
@@ -64,6 +68,9 @@ export async function updateCategory(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const fields = parseCategory(formData);
   const problem = validate(fields, id);
   if (problem) return { error: problem };
@@ -88,6 +95,9 @@ export async function deleteCategory(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("catalog.manage");
+  if ("error" in auth) return auth;
+
   const supabase = createServerClient();
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) {

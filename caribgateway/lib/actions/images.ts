@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { authorize, canEditBusiness } from "@/lib/staff";
 
 export type ActionState = { error: string } | { url: string } | null;
 
@@ -20,6 +21,12 @@ export async function uploadBusinessImage(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  if ("error" in auth) return auth;
+  if (!(await canEditBusiness(auth.staff, businessId))) {
+    return { error: "You can only change listings assigned to your account." };
+  }
+
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return { error: "No file selected." };
   if (file.size > 5 * 1024 * 1024)
@@ -71,19 +78,27 @@ export async function uploadBusinessImage(
 }
 
 export async function deleteBusinessImage(imageId: string, businessId: string) {
+  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  if ("error" in auth) return auth;
+  if (!(await canEditBusiness(auth.staff, businessId))) {
+    return { error: "You can only change listings assigned to your account." };
+  }
+
   const supabase = createServerClient();
 
-  // Fetch storage path before deleting the row
+  // Fetch storage path before deleting the row. Only this business's images match.
   const { data: img } = await supabase
     .from("business_images")
     .select("storage_path, is_primary")
     .eq("id", imageId)
+    .eq("business_id", businessId)
     .single();
 
   const { error } = await supabase
     .from("business_images")
     .delete()
-    .eq("id", imageId);
+    .eq("id", imageId)
+    .eq("business_id", businessId);
 
   if (error) return { error: error.message };
 
@@ -115,7 +130,22 @@ export async function deleteBusinessImage(imageId: string, businessId: string) {
 }
 
 export async function setPrimaryImage(imageId: string, businessId: string) {
+  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  if ("error" in auth) return auth;
+  if (!(await canEditBusiness(auth.staff, businessId))) {
+    return { error: "You can only change listings assigned to your account." };
+  }
+
   const supabase = createServerClient();
+
+  // Stop unless the image belongs to this business, so nothing else changes.
+  const { data: img } = await supabase
+    .from("business_images")
+    .select("id")
+    .eq("id", imageId)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!img) return { error: "That image does not belong to this listing." };
 
   // Unset existing primary
   await supabase

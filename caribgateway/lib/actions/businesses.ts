@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
+import { authorize, can, canEditBusiness, type Staff } from "@/lib/staff";
 import type {
   BusinessType,
   PriceRange,
@@ -75,6 +76,25 @@ function parseBusinessForm(formData: FormData) {
   };
 }
 
+type ParsedBusiness = ReturnType<typeof parseBusinessForm>;
+
+function readOwner(formData: FormData): string | null {
+  return (formData.get("owner_id") as string)?.trim() || null;
+}
+
+/**
+ * The fields this account may set. Without 'Publish and feature', the status,
+ * active, featured, and verified flags are dropped whatever the form sent.
+ * Ownership is handled by the callers.
+ */
+function allowedFields(fields: ParsedBusiness, staff: Staff) {
+  const { status, is_active, is_featured, is_verified, ...details } = fields;
+  return {
+    ...details,
+    ...(can(staff, "listings.publish") ? { status, is_active, is_featured, is_verified } : {}),
+  };
+}
+
 /** Replaces the business's tag assignments with the ticked tags. Returns an error message or null. */
 async function syncTags(businessId: string, formData: FormData): Promise<string | null> {
   const tagIds = formData.getAll("tag_ids").map(String).filter(Boolean);
@@ -97,6 +117,10 @@ export async function createBusiness(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("listings.create");
+  if ("error" in auth) return auth;
+  const { staff } = auth;
+
   const fields = parseBusinessForm(formData);
 
   if (!fields.name) return { error: "Name is required." };
@@ -104,10 +128,13 @@ export async function createBusiness(
   if (!fields.category_id) return { error: "Category is required." };
   if (!fields.business_type) return { error: "Business type is required." };
 
+  // Only 'Edit any listing' can choose an owner. Otherwise the creator owns the new listing.
+  const owner_id = can(staff, "listings.manage_all") ? readOwner(formData) : staff.id;
+
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("businesses")
-    .insert(fields)
+    .insert({ ...allowedFields(fields, staff), owner_id })
     .select("id")
     .single();
 
@@ -117,8 +144,10 @@ export async function createBusiness(
     return { error: error.message };
   }
 
-  const tagError = await syncTags(data.id, formData);
-  if (tagError) return { error: tagError };
+  if (can(staff, "listings.manage_all")) {
+    const tagError = await syncTags(data.id, formData);
+    if (tagError) return { error: tagError };
+  }
 
   revalidatePublicSite();
   revalidatePath("/admin/businesses");
@@ -131,16 +160,29 @@ export async function updateBusiness(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("listings.manage_all", "listings.manage_own");
+  if ("error" in auth) return auth;
+  const { staff } = auth;
+
+  if (!(await canEditBusiness(staff, id))) {
+    return { error: "You can only change listings assigned to your account." };
+  }
+
   const fields = parseBusinessForm(formData);
 
   if (!fields.name) return { error: "Name is required." };
   if (!fields.destination_id) return { error: "Destination is required." };
   if (!fields.category_id) return { error: "Category is required." };
 
+  const canManageAll = can(staff, "listings.manage_all");
+
   const supabase = createServerClient();
   const { error } = await supabase
     .from("businesses")
-    .update(fields)
+    .update({
+      ...allowedFields(fields, staff),
+      ...(canManageAll ? { owner_id: readOwner(formData) } : {}),
+    })
     .eq("id", id);
 
   if (error) {
@@ -149,8 +191,10 @@ export async function updateBusiness(
     return { error: error.message };
   }
 
-  const tagError = await syncTags(id, formData);
-  if (tagError) return { error: tagError };
+  if (canManageAll) {
+    const tagError = await syncTags(id, formData);
+    if (tagError) return { error: tagError };
+  }
 
   revalidatePublicSite();
   revalidatePath("/admin/businesses");
@@ -166,6 +210,12 @@ export async function deleteBusiness(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
+  const auth = await authorize("listings.delete");
+  if ("error" in auth) return auth;
+  if (!(await canEditBusiness(auth.staff, id))) {
+    return { error: "You can only delete listings assigned to your account." };
+  }
+
   const supabase = createServerClient();
   const { error } = await supabase
     .from("businesses")

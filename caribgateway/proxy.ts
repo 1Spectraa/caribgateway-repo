@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SESSION_COOKIE = "cg_admin_session";
+// Presence check only. The signature, the account, and its permissions are
+// verified on the server by (protected)/layout.tsx and every admin action.
+const SESSION_COOKIE = "cg_session";
 const LOGIN_PATH = "/admin/login";
 
 export function proxy(request: NextRequest) {
@@ -9,16 +11,11 @@ export function proxy(request: NextRequest) {
   // Pass through the login page itself
   if (pathname === LOGIN_PATH) return NextResponse.next();
 
-  // Protect every /admin/* route
-  if (pathname.startsWith("/admin")) {
-    const session = request.cookies.get(SESSION_COOKIE);
-    const secret = process.env.ADMIN_SESSION_SECRET;
-
-    if (!secret || !session || session.value !== secret) {
-      const loginUrl = new URL(LOGIN_PATH, request.url);
-      loginUrl.searchParams.set("from", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Send visitors without a session cookie to sign-in
+  if (pathname.startsWith("/admin") && !request.cookies.get(SESSION_COOKIE)) {
+    const loginUrl = new URL(LOGIN_PATH, request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
