@@ -3,6 +3,7 @@ import { ACCOMMODATION_ROOT_SLUG } from "@/lib/catalog";
 import {
   DEFAULT_SITE_CONTENT,
   mergeSiteContent,
+  type KnownRecords,
   type SiteContent,
 } from "@/lib/site-content";
 
@@ -216,4 +217,28 @@ async function fetchHomepageData(): Promise<{
     }));
 
   return { destinations, experiences };
+}
+
+/**
+ * Slugs of the active destinations and countries. The public client only sees
+ * active rows, so these are exactly the pages a content link can reach.
+ */
+export async function getRecordSlugs(): Promise<KnownRecords> {
+  const supabase = createPublicServerClient();
+  const [
+    { data: destinations, error: destinationError },
+    { data: countries, error: countryError },
+  ] = await Promise.all([
+    supabase.from("destinations").select("slug").eq("is_active", true),
+    supabase.from("countries").select("slug").eq("is_active", true),
+  ]);
+
+  if (destinationError || countryError) {
+    throw new Error(destinationError?.message ?? countryError?.message ?? "Could not load pages.");
+  }
+
+  return {
+    destinations: new Set((destinations ?? []).map((d) => d.slug)),
+    countries: new Set((countries ?? []).map((c) => c.slug)),
+  };
 }

@@ -64,13 +64,14 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   footer: {
     tagline:
       "Your ultimate guide to the Caribbean. Discover breathtaking destinations, rich cultures, and unforgettable experiences across the islands.",
+    // Country pages exist for every country, so these links never lead to a 404.
     destinations: [
-      { label: "Barbados", href: "/destinations/barbados" },
-      { label: "Jamaica", href: "/destinations/jamaica" },
-      { label: "Trinidad & Tobago", href: "/destinations/trinidad" },
-      { label: "St. Lucia", href: "/destinations/saint-lucia" },
-      { label: "Antigua & Barbuda", href: "/destinations/antigua" },
-      { label: "The Bahamas", href: "/destinations/nassau" },
+      { label: "Barbados", href: "/countries/barbados" },
+      { label: "Jamaica", href: "/countries/jamaica" },
+      { label: "Trinidad & Tobago", href: "/countries/trinidad-and-tobago" },
+      { label: "St. Lucia", href: "/countries/saint-lucia" },
+      { label: "Antigua & Barbuda", href: "/countries/antigua-and-barbuda" },
+      { label: "St. Kitts & Nevis", href: "/countries/saint-kitts-and-nevis" },
     ],
     experiences: [
       { label: "Beach Escapes", href: "/businesses?category=beaches-nature" },
@@ -230,4 +231,85 @@ export function formatStats(items: StatItem[]): string {
 
 export function formatLines(items: string[]): string {
   return items.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Links to destination and country pages. A link is only valid if its record
+// exists and is active; otherwise the page it leads to is a 404.
+// ---------------------------------------------------------------------------
+
+export type RecordKind = "destinations" | "countries";
+
+export type RecordLink = {
+  /** Where the link appears, e.g. "Footer: destinations". */
+  where: string;
+  label: string;
+  href: string;
+  kind: RecordKind;
+  slug: string;
+};
+
+/** Slugs of the active destinations and countries that links can point at. */
+export type KnownRecords = Record<RecordKind, Set<string>>;
+
+/** Matches /destinations/<slug> and /countries/<slug>, with an optional trailing slash, query, or hash. */
+const RECORD_PATH = /^\/(destinations|countries)\/([^/?#]+)\/?(?:[?#].*)?$/;
+
+function decodeSlug(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/** Every link in the content that points at a destination or country page. */
+export function listRecordLinks(content: SiteContent): RecordLink[] {
+  const sections: Array<[string, LinkItem[]]> = [
+    ["Menu", content.navigation],
+    ["Footer: destinations", content.footer.destinations],
+    ["Footer: experiences", content.footer.experiences],
+    ["Footer: company", content.footer.company],
+    ["Footer: legal", content.footer.legal],
+    [
+      "Homepage: hero buttons",
+      [
+        { label: content.home_hero.primary_label, href: content.home_hero.primary_href },
+        { label: content.home_hero.secondary_label, href: content.home_hero.secondary_href },
+      ],
+    ],
+    [
+      "Homepage: call to action buttons",
+      [
+        { label: content.home_cta.primary_label, href: content.home_cta.primary_href },
+        { label: content.home_cta.secondary_label, href: content.home_cta.secondary_href },
+      ],
+    ],
+  ];
+
+  const links: RecordLink[] = [];
+  for (const [where, items] of sections) {
+    for (const item of items) {
+      const match = RECORD_PATH.exec(item.href);
+      if (!match) continue;
+      links.push({
+        where,
+        label: item.label,
+        href: item.href,
+        kind: match[1] as RecordKind,
+        slug: decodeSlug(match[2]),
+      });
+    }
+  }
+  return links;
+}
+
+/** Record links whose destination or country is missing or inactive. */
+export function brokenRecordLinks(content: SiteContent, known: KnownRecords): RecordLink[] {
+  return listRecordLinks(content).filter((link) => !known[link.kind].has(link.slug));
+}
+
+/** One entry per broken link, for the error shown when saving. */
+export function describeRecordLinks(links: RecordLink[]): string {
+  return links.map((link) => `${link.where}: "${link.label}" → ${link.href}`).join("; ");
 }

@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { getRecordSlugs } from "@/lib/queries";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import {
+  brokenRecordLinks,
+  describeRecordLinks,
   parseLines,
   parseLinks,
   parseStats,
@@ -83,6 +86,17 @@ export async function saveSiteContent(
   if (!content.home_hero.headline) return { error: "The homepage headline cannot be empty." };
   if (!content.page_experiences.title) return { error: "The Experiences page title cannot be empty." };
   if (!content.page_accommodations.title) return { error: "The Accommodations page title cannot be empty." };
+
+  // A link to a destination or country that doesn't exist, or is inactive, leads to a 404.
+  const known = await getRecordSlugs().catch(() => null);
+  if (!known) return { error: "Could not check the links right now. Try saving again." };
+
+  const broken = brokenRecordLinks(content, known);
+  if (broken.length > 0) {
+    return {
+      error: `These links lead to a destination or country that doesn't exist or isn't active: ${describeRecordLinks(broken)}. Fix them, or activate or add the record, then save again.`,
+    };
+  }
 
   const supabase = createServerClient();
   const { error } = await supabase.from("site_settings").upsert(
