@@ -108,14 +108,17 @@ export async function loginAdmin(_: AuthState, formData: FormData): Promise<Auth
     redirect("/admin");
   }
 
+  // The emergency account has no email address, so its username is "admin".
+  const isEmergency = email.toLowerCase() === "admin";
   const adminPassword = process.env.ADMIN_PASSWORD;
-  if (adminPassword && email === "admin" && password === adminPassword) {
+  if (isEmergency && adminPassword && password === adminPassword) {
     await setSessionCookie(ROOT_SUBJECT);
     await setUserCookie({ name: "Emergency admin", email: "admin", role: "admin", admin: true });
     redirect("/admin");
   }
 
-  return { error: result.error };
+  // Supabase's "email is invalid" message means nothing for the username, so show a plain one.
+  return { error: isEmergency ? "Invalid email or password." : result.error };
 }
 
 // ---------------------------------------------------------------------------
