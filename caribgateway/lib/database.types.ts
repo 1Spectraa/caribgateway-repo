@@ -169,6 +169,8 @@ export type CategoryRow = {
   color: string | null;
   sort_order: number;
   is_active: boolean;
+  /** Pinned to the homepage "Caribbean Experiences" grid. */
+  is_featured: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -275,6 +277,13 @@ export type BusinessServiceInsert = {
   sort_order?: number;
 };
 
+/** Editable site copy. `key` is 'site_content'; `value` is the SiteContent JSON. */
+export type SiteSettingRow = {
+  key: string;
+  value: unknown;
+  updated_at: string;
+};
+
 // ---------------------------------------------------------------------------
 // Insert / Update types
 // ---------------------------------------------------------------------------
@@ -302,8 +311,12 @@ export type DestinationInsert = {
 };
 export type DestinationUpdate = Partial<DestinationInsert>;
 
-export type CategoryInsert = Omit<CategoryRow, "id" | "created_at" | "updated_at"> & {
+export type CategoryInsert = Omit<
+  CategoryRow,
+  "id" | "created_at" | "updated_at" | "is_featured"
+> & {
   id?: string;
+  is_featured?: boolean;
 };
 export type CategoryUpdate = Partial<CategoryInsert>;
 
@@ -417,6 +430,12 @@ export interface Database {
         Row: BusinessServiceRow;
         Insert: BusinessServiceInsert;
         Update: Partial<BusinessServiceInsert>;
+        Relationships: [];
+      };
+      site_settings: {
+        Row: SiteSettingRow;
+        Insert: { key: string; value: unknown; updated_at?: string };
+        Update: Partial<{ key: string; value: unknown; updated_at: string }>;
         Relationships: [];
       };
     };

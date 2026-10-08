@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const typeConfig: Record<string, { label: string; colorClass: string; gradientClass: string }> = {
-  hotel:          { label: "Hotel",           colorClass: "bg-blue-100 text-blue-700",     gradientClass: "from-blue-400 to-blue-600" },
+  hotel:          { label: "Accommodation",   colorClass: "bg-blue-100 text-blue-700",     gradientClass: "from-blue-400 to-blue-600" },
   restaurant:     { label: "Restaurant",      colorClass: "bg-orange-100 text-orange-700", gradientClass: "from-orange-400 to-orange-600" },
   attraction:     { label: "Attraction",      colorClass: "bg-purple-100 text-purple-700", gradientClass: "from-purple-400 to-purple-600" },
   tour_operator:  { label: "Tour Operator",   colorClass: "bg-green-100 text-green-700",   gradientClass: "from-green-400 to-green-600" },

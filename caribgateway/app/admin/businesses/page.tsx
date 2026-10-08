@@ -87,7 +87,7 @@ export default async function BusinessesPage() {
                     {destMap[b.destination_id] ?? "—"}
                   </td>
                   <td className="px-4 py-2.5 text-gray-600 capitalize">
-                    {b.business_type.replace("_", " ")}
+                    {b.business_type === "hotel" ? "Accommodation" : b.business_type.replace("_", " ")}
                   </td>
                   <td className="px-4 py-2.5">
                     <span

@@ -5,8 +5,8 @@ import { useCallback, useRef } from "react";
 import Link from "next/link";
 
 interface BusinessFiltersProps {
-  destinations: Array<{ id: string; name: string }>;
-  categories: Array<{ id: string; name: string }>;
+  destinations: Array<{ slug: string; name: string }>;
+  categories: Array<{ slug: string; name: string }>;
   currentFilters: {
     q?: string;
     type?: string;
@@ -15,9 +15,9 @@ interface BusinessFiltersProps {
   };
 }
 
-const businessTypes = [
+// Accommodations have their own page, so they are not offered as an experience type.
+const experienceTypes = [
   { value: "", label: "All" },
-  { value: "hotel", label: "Hotels" },
   { value: "restaurant", label: "Restaurants" },
   { value: "attraction", label: "Attractions" },
   { value: "tour_operator", label: "Tours" },
@@ -77,7 +77,7 @@ export default function BusinessFilters({
       {/* Search */}
       <form onSubmit={handleSearchSubmit} className="relative">
         <label htmlFor="business-search" className="sr-only">
-          Search businesses
+          Search experiences
         </label>
         <div className="relative">
           <svg
@@ -100,7 +100,7 @@ export default function BusinessFilters({
             type="search"
             defaultValue={currentFilters.q ?? ""}
             onChange={handleSearchChange}
-            placeholder="Search hotels, restaurants, attractions..."
+            placeholder="Search restaurants, attractions, tours..."
             className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-teal/30 focus:border-brand-teal transition-colors"
           />
         </div>
@@ -108,13 +108,13 @@ export default function BusinessFilters({
 
       {/* Row: type pills + dropdowns */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
-        {/* Business type pills */}
+        {/* Experience type pills */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {businessTypes.map(({ value, label }) => {
+          {experienceTypes.map(({ value, label }) => {
             const active = (currentFilters.type ?? "") === value;
             return (
               <button
-                key={value}
+                key={value || "all"}
                 type="button"
                 onClick={() => updateParams({ type: value || undefined })}
                 className={`text-xs font-medium px-3.5 py-1.5 rounded-full border transition-all ${
@@ -144,7 +144,7 @@ export default function BusinessFilters({
           >
             <option value="">All Destinations</option>
             {destinations.map((d) => (
-              <option key={d.id} value={d.id}>
+              <option key={d.slug} value={d.slug}>
                 {d.name}
               </option>
             ))}
@@ -163,7 +163,7 @@ export default function BusinessFilters({
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.slug} value={c.slug}>
                 {c.name}
               </option>
             ))}

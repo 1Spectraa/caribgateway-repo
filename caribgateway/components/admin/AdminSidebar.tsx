@@ -9,6 +9,11 @@ const navItems = [
   { label: "Dashboard", href: "/admin", icon: "▦" },
   { label: "Destinations", href: "/admin/destinations", icon: "🗺" },
   { label: "Businesses", href: "/admin/businesses", icon: "🏢" },
+  { label: "Accommodations", href: "/admin/accommodations", icon: "🛏" },
+  { label: "Countries", href: "/admin/countries", icon: "🌍" },
+  { label: "Categories", href: "/admin/categories", icon: "🏷" },
+  { label: "Tags", href: "/admin/tags", icon: "#" },
+  { label: "Site Content", href: "/admin/site", icon: "✎" },
 ];
 
 export default function AdminSidebar() {

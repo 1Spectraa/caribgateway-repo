@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { stats } from "@/data/content";
+import type { SiteContent, StatItem } from "@/lib/site-content";
 
-export default function HeroSection() {
+type Props = {
+  hero: SiteContent["home_hero"];
+  stats: StatItem[];
+};
+
+export default function HeroSection({ hero, stats }: Props) {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-16">
       {/* Background gradient */}
@@ -45,14 +50,12 @@ export default function HeroSection() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 text-sm px-4 py-1.5 rounded-full mb-8 border border-white/20">
           <span className="w-2 h-2 bg-brand-coral rounded-full animate-pulse" />
-          Discover the Caribbean&apos;s Best
+          {hero.badge}
         </div>
 
         {/* Headline */}
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.1] mb-6 max-w-5xl mx-auto">
-          Discover the Beauty{" "}
-          <br className="hidden sm:block" />
-          of the{" "}
+          {hero.headline}{" "}
           <span
             className="relative inline-block"
             style={{
@@ -62,47 +65,48 @@ export default function HeroSection() {
               backgroundClip: "text",
             }}
           >
-            Caribbean
+            {hero.headline_highlight}
           </span>
         </h1>
 
         {/* Subheadline */}
         <p className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Explore pristine beaches, vibrant cultures, and unforgettable
-          adventures across the most stunning islands in the world.
+          {hero.subheadline}
         </p>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/destinations"
+            href={hero.primary_href}
             className="bg-brand-coral hover:bg-brand-coral-dark text-white font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 shadow-lg w-full sm:w-auto"
             style={{ boxShadow: "0 8px 32px rgba(243,126,91,0.35)" }}
           >
-            Explore Destinations
+            {hero.primary_label}
           </Link>
           <Link
-            href="/businesses"
+            href={hero.secondary_href}
             className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-full border border-white/30 transition-all hover:scale-105 backdrop-blur-sm w-full sm:w-auto"
           >
-            View Experiences
+            {hero.secondary_label}
           </Link>
         </div>
 
         {/* Stats row */}
-        <div className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
-          {stats.map((stat, i) => (
-            <div key={stat.label} className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-white">{stat.value}</div>
-                <div className="text-white/60 text-sm mt-0.5">{stat.label}</div>
+        {stats.length > 0 && (
+          <div className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
+            {stats.map((stat, i) => (
+              <div key={`${stat.label}-${i}`} className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white">{stat.value}</div>
+                  <div className="text-white/60 text-sm mt-0.5">{stat.label}</div>
+                </div>
+                {i < stats.length - 1 && (
+                  <div className="hidden sm:block w-px h-10 bg-white/20" />
+                )}
               </div>
-              {i < stats.length - 1 && (
-                <div className="hidden sm:block w-px h-10 bg-white/20" />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

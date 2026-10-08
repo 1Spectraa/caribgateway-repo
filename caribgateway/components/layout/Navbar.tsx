@@ -1,38 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { navLinks } from "@/data/content";
+import type { LinkItem } from "@/lib/site-content";
 import { logout } from "@/lib/actions/auth";
 
 type CgUser = { name: string; email: string; role: string } | null;
 
-function readCgUser(): CgUser {
-  if (typeof document === "undefined") return null;
+const subscribeNone = () => () => {};
+
+/** Raw cg-user cookie. A string, so useSyncExternalStore gets a stable snapshot. */
+function readCgCookie(): string {
   const match = document.cookie.match(/(?:^|;\s*)cg-user=([^;]*)/);
-  if (!match) return null;
+  return match ? match[1] : "";
+}
+
+function parseCgUser(raw: string): CgUser {
+  if (!raw) return null;
   try {
-    return JSON.parse(decodeURIComponent(match[1])) as CgUser;
+    return JSON.parse(decodeURIComponent(raw)) as CgUser;
   } catch {
     return null;
   }
 }
 
-export default function Navbar() {
+export default function Navbar({ links }: { links: LinkItem[] }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<CgUser>(null);
-  const [hydrated, setHydrated] = useState(false);
+  // Signed out on the server and during hydration; the cookie is read once the page is in the browser.
+  const cookie = useSyncExternalStore(subscribeNone, readCgCookie, () => "");
+  const hydrated = useSyncExternalStore(subscribeNone, () => true, () => false);
+  const user = useMemo(() => parseCgUser(cookie), [cookie]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setUser(readCgUser());
-    setHydrated(true);
   }, []);
 
   const firstName = user?.name.split(" ")[0] ?? "";
@@ -79,7 +82,7 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-7">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
@@ -194,7 +197,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-3 space-y-1">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}

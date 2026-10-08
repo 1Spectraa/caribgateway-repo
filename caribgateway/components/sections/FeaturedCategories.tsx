@@ -1,36 +1,48 @@
 import Link from "next/link";
-import { categories } from "@/data/content";
+import type { HomeExperience } from "@/lib/queries";
+import type { SiteContent } from "@/lib/site-content";
 
-export default function FeaturedCategories() {
+type Props = {
+  copy: SiteContent["home_experiences"];
+  experiences: HomeExperience[];
+};
+
+function listingLabel(count: number): string {
+  if (count === 0) return "Coming soon";
+  return `${count} ${count === 1 ? "listing" : "listings"}`;
+}
+
+export default function FeaturedCategories({ copy, experiences }: Props) {
+  if (experiences.length === 0) return null;
+
   return (
     <section id="categories" className="py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-16">
           <span className="text-brand-coral font-semibold text-sm uppercase tracking-widest">
-            Browse By
+            {copy.eyebrow}
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-brand-navy mt-2 mb-4">
-            Caribbean Experiences
+            {copy.title}
           </h2>
           <p className="text-gray-500 max-w-xl mx-auto text-lg leading-relaxed">
-            Whatever you&apos;re looking for, the Caribbean has it. Find your
-            perfect experience below.
+            {copy.subtitle}
           </p>
         </div>
 
         {/* Category grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {categories.map((cat) => (
+          {experiences.map((cat) => (
             <Link
               key={cat.id}
-              href="#"
+              href={`/businesses?category=${cat.slug}`}
               className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-gray-100 hover:border-brand-teal/25 transition-all duration-200 hover:-translate-y-0.5 flex items-start gap-5"
             >
               {/* Icon */}
               <div
                 className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                style={{ backgroundColor: cat.accentColor }}
+                style={{ backgroundColor: cat.color ?? "#1f476c" }}
               >
                 <span className="text-2xl">{cat.icon}</span>
               </div>
@@ -40,11 +52,13 @@ export default function FeaturedCategories() {
                 <h3 className="font-bold text-brand-navy text-lg mb-1.5 group-hover:text-brand-teal transition-colors">
                   {cat.name}
                 </h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-3">
-                  {cat.description}
-                </p>
+                {cat.description && (
+                  <p className="text-gray-500 text-sm leading-relaxed mb-3">
+                    {cat.description}
+                  </p>
+                )}
                 <span className="text-brand-slate text-xs font-medium bg-gray-50 px-2.5 py-1 rounded-full">
-                  {cat.count}
+                  {listingLabel(cat.listing_count)}
                 </span>
               </div>
             </Link>
@@ -56,12 +70,13 @@ export default function FeaturedCategories() {
             href="/businesses"
             className="inline-flex items-center gap-2 border-2 border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white font-semibold px-8 py-3 rounded-full transition-all"
           >
-            View All Experiences
+            {copy.cta_label}
             <svg
               className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

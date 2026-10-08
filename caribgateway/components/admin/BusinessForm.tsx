@@ -6,7 +6,11 @@ import {
   updateBusiness,
   type ActionState,
 } from "@/lib/actions/businesses";
-import type { BusinessRow, SocialLinks } from "@/lib/database.types";
+import type {
+  BusinessRow,
+  BusinessType,
+  SocialLinks,
+} from "@/lib/database.types";
 
 type DestinationOption = {
   id: string;
@@ -22,10 +26,24 @@ type CategoryOption = {
   parent_id: string | null;
 };
 
+type TagOption = {
+  id: string;
+  name: string;
+  color: string;
+  is_active: boolean;
+};
+
 interface Props {
   destinations: DestinationOption[];
   categories: CategoryOption[];
+  tags: TagOption[];
   business?: BusinessRow;
+  /** Tag ids already assigned to the business being edited. */
+  selectedTagIds?: string[];
+  /** Fixes the business type, e.g. "hotel" on the Accommodations pages. */
+  lockedType?: BusinessType;
+  /** Admin page to return to after saving or cancelling. */
+  returnTo?: string;
 }
 
 function toSlug(str: string): string {
@@ -41,7 +59,7 @@ function toSlug(str: string): string {
 }
 
 const BUSINESS_TYPES = [
-  { value: "hotel", label: "Hotel & Accommodation" },
+  { value: "hotel", label: "Accommodation" },
   { value: "restaurant", label: "Restaurant & Dining" },
   { value: "attraction", label: "Attraction" },
   { value: "tour_operator", label: "Tour Operator" },
@@ -54,7 +72,11 @@ const STATUSES = ["draft", "published", "archived"] as const;
 export default function BusinessForm({
   destinations,
   categories,
+  tags,
   business,
+  selectedTagIds = [],
+  lockedType,
+  returnTo = "/admin/businesses",
 }: Props) {
   const action = business
     ? updateBusiness.bind(null, business.id)
@@ -69,7 +91,7 @@ export default function BusinessForm({
   const slugTouched = useRef(false);
 
   const [selectedType, setSelectedType] = useState<string>(
-    business?.business_type ?? "",
+    lockedType ?? business?.business_type ?? "",
   );
 
   // Filter categories based on selected business_type
@@ -101,6 +123,8 @@ export default function BusinessForm({
 
   return (
     <form action={formAction} className="space-y-8 max-w-3xl">
+      <input type="hidden" name="return_to" value={returnTo} />
+      {lockedType && <input type="hidden" name="business_type" value={lockedType} />}
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
           {state.error}
@@ -161,7 +185,8 @@ export default function BusinessForm({
             </label>
             <select
               name="business_type"
-              required
+              required={!lockedType}
+              disabled={!!lockedType}
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -462,6 +487,44 @@ export default function BusinessForm({
       </section>
 
       {/* ── Flags ──────────────────────────────────── */}
+      {/* ── Tags ───────────────────────────────────── */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Tags
+        </h3>
+        {tags.length > 0 ? (
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            {tags.map((tag) => (
+              <label
+                key={tag.id}
+                className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+              >
+                <input
+                  name="tag_ids"
+                  type="checkbox"
+                  value={tag.id}
+                  defaultChecked={selectedTagIds.includes(tag.id)}
+                  className="h-4 w-4"
+                />
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: tag.color }}
+                  aria-hidden="true"
+                />
+                {tag.name}
+                {!tag.is_active && (
+                  <span className="text-xs text-gray-400">(inactive)</span>
+                )}
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 italic">
+            No tags yet. Add them from the Tags page.
+          </p>
+        )}
+      </section>
+
       <section>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           Visibility
@@ -508,7 +571,7 @@ export default function BusinessForm({
               : "Create Business"}
         </button>
         <a
-          href="/admin/businesses"
+          href={returnTo}
           className="text-sm text-gray-500 hover:text-gray-700"
         >
           Cancel

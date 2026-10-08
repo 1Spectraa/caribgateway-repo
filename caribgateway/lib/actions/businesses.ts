@@ -3,19 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
+import { revalidatePublicSite } from "@/lib/revalidate";
+import { toSlug } from "@/lib/slug";
+import type {
+  BusinessType,
+  PriceRange,
+  PublishStatus,
+} from "@/lib/database.types";
 
 export type ActionState = { error: string } | null;
 
-function toSlug(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, "a")
-    .replace(/[èéêë]/g, "e")
-    .replace(/[ìíîï]/g, "i")
-    .replace(/[òóôõö]/g, "o")
-    .replace(/[ùúûü]/g, "u")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+/** Admin pages a business form may return to. Anything else goes to the businesses list. */
+const RETURN_PATHS = ["/admin/businesses", "/admin/accommodations"] as const;
+
+function returnPath(formData: FormData): string {
+  const requested = formData.get("return_to");
+  return RETURN_PATHS.find((path) => path === requested) ?? "/admin/businesses";
 }
 
 function parseBusinessForm(formData: FormData) {
@@ -44,12 +47,12 @@ function parseBusinessForm(formData: FormData) {
     slug: rawSlug || toSlug(name ?? ""),
     destination_id: formData.get("destination_id") as string,
     category_id: formData.get("category_id") as string,
-    business_type: formData.get("business_type") as import("@/lib/database.types").BusinessType,
-    status: ((formData.get("status") as string) || "draft") as import("@/lib/database.types").PublishStatus,
+    business_type: formData.get("business_type") as BusinessType,
+    status: ((formData.get("status") as string) || "draft") as PublishStatus,
     short_description:
       (formData.get("short_description") as string)?.trim() || null,
     description: (formData.get("description") as string)?.trim() || null,
-    price_range: ((formData.get("price_range") as string) || null) as import("@/lib/database.types").PriceRange | null,
+    price_range: ((formData.get("price_range") as string) || null) as PriceRange | null,
     address_line1: (formData.get("address_line1") as string)?.trim() || null,
     address_line2: (formData.get("address_line2") as string)?.trim() || null,
     city: (formData.get("city") as string)?.trim() || null,
@@ -68,8 +71,26 @@ function parseBusinessForm(formData: FormData) {
     features,
     is_verified: formData.get("is_verified") === "on",
     is_featured: formData.get("is_featured") === "on",
-    is_active: formData.get("is_active") !== "off",
+    is_active: formData.get("is_active") === "on",
   };
+}
+
+/** Replaces the business's tag assignments with the ticked tags. Returns an error message or null. */
+async function syncTags(businessId: string, formData: FormData): Promise<string | null> {
+  const tagIds = formData.getAll("tag_ids").map(String).filter(Boolean);
+  const supabase = createServerClient();
+
+  const { error: clearError } = await supabase
+    .from("business_tags")
+    .delete()
+    .eq("business_id", businessId);
+  if (clearError) return clearError.message;
+
+  if (tagIds.length === 0) return null;
+  const { error } = await supabase
+    .from("business_tags")
+    .insert(tagIds.map((tag_id) => ({ business_id: businessId, tag_id })));
+  return error ? error.message : null;
 }
 
 export async function createBusiness(
@@ -84,7 +105,11 @@ export async function createBusiness(
   if (!fields.business_type) return { error: "Business type is required." };
 
   const supabase = createServerClient();
-  const { error } = await supabase.from("businesses").insert(fields);
+  const { data, error } = await supabase
+    .from("businesses")
+    .insert(fields)
+    .select("id")
+    .single();
 
   if (error) {
     if (error.code === "23505")
@@ -92,8 +117,13 @@ export async function createBusiness(
     return { error: error.message };
   }
 
+  const tagError = await syncTags(data.id, formData);
+  if (tagError) return { error: tagError };
+
+  revalidatePublicSite();
   revalidatePath("/admin/businesses");
-  redirect("/admin/businesses");
+  revalidatePath("/admin/accommodations");
+  redirect(returnPath(formData));
 }
 
 export async function updateBusiness(
@@ -119,13 +149,19 @@ export async function updateBusiness(
     return { error: error.message };
   }
 
+  const tagError = await syncTags(id, formData);
+  if (tagError) return { error: tagError };
+
+  revalidatePublicSite();
   revalidatePath("/admin/businesses");
+  revalidatePath("/admin/accommodations");
   revalidatePath(`/admin/businesses/${id}/edit`);
-  redirect("/admin/businesses");
+  redirect(returnPath(formData));
 }
 
 export async function deleteBusiness(
   id: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _: ActionState,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
@@ -138,6 +174,8 @@ export async function deleteBusiness(
 
   if (error) return { error: error.message };
 
+  revalidatePublicSite();
   revalidatePath("/admin/businesses");
+  revalidatePath("/admin/accommodations");
   redirect("/admin/businesses");
 }

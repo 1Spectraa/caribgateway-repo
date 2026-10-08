@@ -15,10 +15,12 @@ interface BusinessCardProps {
     destination_name?: string;
     primaryImageUrl?: string;
   };
+  /** Overrides the type badge, e.g. "Airbnb & Short-Term Rentals" on the Accommodations page. */
+  typeLabel?: string;
 }
 
 const typeConfig: Record<string, { label: string; colorClass: string; gradientClass: string }> = {
-  hotel:           { label: "Hotel",           colorClass: "bg-blue-100 text-blue-700",   gradientClass: "from-blue-400 to-blue-600" },
+  hotel:           { label: "Accommodation",   colorClass: "bg-blue-100 text-blue-700",   gradientClass: "from-blue-400 to-blue-600" },
   restaurant:      { label: "Restaurant",      colorClass: "bg-orange-100 text-orange-700", gradientClass: "from-orange-400 to-orange-600" },
   attraction:      { label: "Attraction",      colorClass: "bg-purple-100 text-purple-700", gradientClass: "from-purple-400 to-purple-600" },
   tour_operator:   { label: "Tour Operator",   colorClass: "bg-green-100 text-green-700",  gradientClass: "from-green-400 to-green-600" },
@@ -52,7 +54,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export default function BusinessCard({ business }: BusinessCardProps) {
+export default function BusinessCard({ business, typeLabel }: BusinessCardProps) {
   const {
     name,
     slug,
@@ -100,7 +102,7 @@ export default function BusinessCard({ business }: BusinessCardProps) {
         {/* Type badge */}
         <div className="absolute top-3 right-3">
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm text-white`}>
-            {config.label}
+            {typeLabel ?? config.label}
           </span>
         </div>
       </div>

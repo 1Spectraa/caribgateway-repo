@@ -1,13 +1,21 @@
 import { createServerClient } from "@/lib/supabase";
 import BusinessForm from "@/components/admin/BusinessForm";
 
-export default async function NewBusinessPage() {
+interface Props {
+  searchParams: Promise<{ from?: string }>;
+}
+
+export default async function NewBusinessPage({ searchParams }: Props) {
+  const { from } = await searchParams;
+  // "New Accommodation" links here with ?from=accommodations.
+  const fromAccommodations = from === "accommodations";
   const supabase = createServerClient();
 
   const [
     { data: destinations, error: destErr },
     { data: countries },
     { data: categories, error: catErr },
+    { data: tags },
   ] = await Promise.all([
     supabase.from("destinations").select("id, name, country_id").order("name"),
     supabase.from("countries").select("id, name"),
@@ -15,6 +23,7 @@ export default async function NewBusinessPage() {
       .from("categories")
       .select("id, name, slug, parent_id, sort_order")
       .order("sort_order"),
+    supabase.from("tags").select("id, name, color, is_active").order("name"),
   ]);
 
   if (destErr) console.error("[admin/businesses/new] destinations error:", destErr);
@@ -32,11 +41,16 @@ export default async function NewBusinessPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">New Business</h1>
+      <h1 className="text-xl font-bold text-gray-900">
+        {fromAccommodations ? "New Accommodation" : "New Business"}
+      </h1>
       <div className="bg-white border border-gray-200 rounded p-6">
         <BusinessForm
           destinations={destWithCountry}
           categories={categories ?? []}
+          tags={tags ?? []}
+          lockedType={fromAccommodations ? "hotel" : undefined}
+          returnTo={fromAccommodations ? "/admin/accommodations" : "/admin/businesses"}
         />
       </div>
     </div>

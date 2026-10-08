@@ -4,10 +4,12 @@ import BusinessForm from "@/components/admin/BusinessForm";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }
 
-export default async function EditBusinessPage({ params }: Props) {
+export default async function EditBusinessPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { from } = await searchParams;
   const supabase = createServerClient();
 
   const { data: business } = await supabase
@@ -18,10 +20,15 @@ export default async function EditBusinessPage({ params }: Props) {
 
   if (!business) notFound();
 
+  // Accommodations are edited from the Accommodations page; keep them there.
+  const fromAccommodations = from === "accommodations" && business.business_type === "hotel";
+
   const [
     { data: destinations },
     { data: countries },
     { data: categories },
+    { data: tags },
+    { data: assignedTags },
   ] = await Promise.all([
     supabase
       .from("destinations")
@@ -32,6 +39,8 @@ export default async function EditBusinessPage({ params }: Props) {
       .from("categories")
       .select("id, name, slug, parent_id, sort_order")
       .order("sort_order"),
+    supabase.from("tags").select("id, name, color, is_active").order("name"),
+    supabase.from("business_tags").select("tag_id").eq("business_id", id),
   ]);
 
   const countryMap = Object.fromEntries(
@@ -68,7 +77,11 @@ export default async function EditBusinessPage({ params }: Props) {
         <BusinessForm
           destinations={destWithCountry}
           categories={categories ?? []}
+          tags={tags ?? []}
           business={business}
+          selectedTagIds={(assignedTags ?? []).map((row) => row.tag_id)}
+          lockedType={fromAccommodations ? "hotel" : undefined}
+          returnTo={fromAccommodations ? "/admin/accommodations" : "/admin/businesses"}
         />
       </div>
     </div>

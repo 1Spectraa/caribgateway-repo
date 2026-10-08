@@ -31,6 +31,17 @@ function toSlug(str: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/** Homepage card copy lives in destinations.metadata. */
+function metaString(destination: DestinationRow | undefined, key: string): string {
+  const value = destination?.metadata?.[key];
+  return typeof value === "string" ? value : "";
+}
+
+function metaList(destination: DestinationRow | undefined, key: string): string[] {
+  const value = destination?.metadata?.[key];
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+}
+
 const DESTINATION_TYPES = [
   "island",
   "town",
@@ -220,6 +231,48 @@ export default function DestinationForm({ countries, destination }: Props) {
           name="sort_order"
           type="number"
           defaultValue={destination?.sort_order ?? 0}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Homepage card copy */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Homepage Tagline
+          </label>
+          <input
+            name="tagline"
+            type="text"
+            defaultValue={metaString(destination, "tagline")}
+            placeholder="e.g. Island of Springs"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Emoji
+          </label>
+          <input
+            name="emoji"
+            type="text"
+            maxLength={8}
+            defaultValue={metaString(destination, "emoji")}
+            placeholder="🌴"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Homepage Tags{" "}
+          <span className="text-gray-400 font-normal">(comma-separated)</span>
+        </label>
+        <input
+          name="tags"
+          type="text"
+          defaultValue={metaList(destination, "tags").join(", ")}
+          placeholder="Beach, Culture, Diving"
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

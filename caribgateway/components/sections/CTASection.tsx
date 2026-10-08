@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ctaTrustPoints } from "@/data/content";
+import type { SiteContent } from "@/lib/site-content";
 
-export default function CTASection() {
+export default function CTASection({ copy }: { copy: SiteContent["home_cta"] }) {
   return (
     <section id="cta" className="relative py-28 overflow-hidden">
       {/* Background */}
@@ -32,11 +32,11 @@ export default function CTASection() {
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <span className="inline-block bg-brand-coral/20 text-brand-coral text-sm font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border border-brand-coral/30">
-          Start Your Journey
+          {copy.eyebrow}
         </span>
 
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          Ready to Discover Your
+          {copy.title}
           <br />
           <span
             style={{
@@ -46,57 +46,52 @@ export default function CTASection() {
               backgroundClip: "text",
             }}
           >
-            Caribbean Paradise?
+            {copy.title_highlight}
           </span>
         </h2>
 
         <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Start planning your dream trip today. Explore curated destinations,
-          handpicked experiences, and expert travel guides — all in one place.
+          {copy.subtitle}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/destinations"
+            href={copy.primary_href}
             className="bg-brand-coral hover:bg-brand-coral-dark text-white font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 w-full sm:w-auto"
             style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}
           >
-            Explore Destinations
+            {copy.primary_label}
           </Link>
           <Link
-            href="/businesses"
+            href={copy.secondary_href}
             className="bg-white text-brand-navy hover:bg-gray-100 font-semibold px-8 py-4 rounded-full transition-all hover:scale-105 w-full sm:w-auto"
           >
-            View All Businesses
+            {copy.secondary_label}
           </Link>
         </div>
-        {/* Decorative bottom note */}
-        <p className="text-center text-brand-slate text-sm mt-12">
-          More experiences coming soon!.{" "}
-          <Link href="#" className="text-brand-teal font-medium hover:underline">
-            Subscribe for updates
-          </Link>
-        </p>
 
         {/* Trust indicators */}
-        <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
-          {ctaTrustPoints.map((point) => (
-            <div key={point} className="flex items-center gap-2 text-white/60">
-              <svg
-                className="w-5 h-5 text-brand-coral flex-shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-sm">{point}</span>
-            </div>
-          ))}
-        </div>
+        {copy.trust_points.length > 0 && (
+          <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
+            {copy.trust_points.map((point) => (
+              <div key={point} className="flex items-center gap-2 text-white/60">
+                <svg
+                  className="w-5 h-5 text-brand-coral flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-sm">{point}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

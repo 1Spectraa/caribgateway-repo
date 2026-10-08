@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createPublicServerClient } from "@/lib/supabase";
+import { getSiteContent } from "@/lib/queries";
 import DestinationCard from "@/components/destinations/DestinationCard";
 import EmptyState from "@/components/ui/EmptyState";
 import Link from "next/link";
@@ -13,13 +14,14 @@ export const metadata: Metadata = {
 export default async function DestinationsPage() {
   const supabase = createPublicServerClient();
 
-  const [{ data: destinations }, { data: countries }] = await Promise.all([
+  const [{ data: destinations }, { data: countries }, content] = await Promise.all([
     supabase
       .from("destinations")
       .select("*")
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase.from("countries").select("id, name"),
+    getSiteContent(),
   ]);
 
   const countryMap = Object.fromEntries(
@@ -30,6 +32,8 @@ export default async function DestinationsPage() {
     ...d,
     country_name: countryMap[d.country_id] ?? "Caribbean",
   }));
+
+  const copy = content.page_destinations;
 
   return (
     <>
@@ -46,14 +50,13 @@ export default async function DestinationsPage() {
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="inline-block text-brand-coral font-semibold text-sm uppercase tracking-widest mb-4">
-            Explore the Region
+            {copy.eyebrow}
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Discover the Caribbean
+            {copy.title}
           </h1>
           <p className="text-white/70 max-w-2xl mx-auto text-lg leading-relaxed">
-            From volcanic peaks and lush rainforests to turquoise lagoons and
-            colonial towns — every Caribbean destination tells its own story.
+            {copy.subtitle}
           </p>
         </div>
       </section>

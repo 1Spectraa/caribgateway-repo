@@ -66,7 +66,7 @@ async function getStats() {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  hotel: "Hotels",
+  hotel: "Accommodations",
   restaurant: "Restaurants",
   attraction: "Attractions",
   tour_operator: "Tour Operators",
@@ -192,7 +192,7 @@ export default async function AdminDashboard() {
                   <tr key={b.id} className="border-b border-gray-50 last:border-0">
                     <td className="px-4 py-2.5">
                       <p className="text-gray-900 font-medium">{b.name}</p>
-                      <p className="text-gray-400 text-xs capitalize">{b.business_type.replace("_", " ")}</p>
+                      <p className="text-gray-400 text-xs capitalize">{TYPE_LABELS[b.business_type] ?? b.business_type.replace("_", " ")}</p>
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
