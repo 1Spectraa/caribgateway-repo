@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
-import { authorize, canEditBusiness } from "@/lib/staff";
+import { authorizeBusinessRight } from "@/lib/staff";
 
 export type ActionState = { error: string } | { url: string } | null;
 
@@ -21,11 +21,8 @@ export async function uploadBusinessImage(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
+  const auth = await authorizeBusinessRight(businessId, "photos");
   if ("error" in auth) return auth;
-  if (!(await canEditBusiness(auth.staff, businessId))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return { error: "No file selected." };
@@ -78,11 +75,8 @@ export async function uploadBusinessImage(
 }
 
 export async function deleteBusinessImage(imageId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
+  const auth = await authorizeBusinessRight(businessId, "photos");
   if ("error" in auth) return auth;
-  if (!(await canEditBusiness(auth.staff, businessId))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
 
   const supabase = createServerClient();
 
@@ -130,11 +124,8 @@ export async function deleteBusinessImage(imageId: string, businessId: string) {
 }
 
 export async function setPrimaryImage(imageId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
+  const auth = await authorizeBusinessRight(businessId, "photos");
   if ("error" in auth) return auth;
-  if (!(await canEditBusiness(auth.staff, businessId))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
 
   const supabase = createServerClient();
 

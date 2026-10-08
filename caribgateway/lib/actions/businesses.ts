@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
-import { authorize, can, canEditBusiness, type Staff } from "@/lib/staff";
+import { authorize, authorizeBusinessRight, businessRights, can, type Staff } from "@/lib/staff";
+import { setBusinessOwner } from "@/lib/business-members";
 import type {
   BusinessType,
   PriceRange,
@@ -160,13 +161,9 @@ export async function updateBusiness(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
+  const auth = await authorizeBusinessRight(id, "details");
   if ("error" in auth) return auth;
   const { staff } = auth;
-
-  if (!(await canEditBusiness(staff, id))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
 
   const fields = parseBusinessForm(formData);
 
@@ -179,10 +176,7 @@ export async function updateBusiness(
   const supabase = createServerClient();
   const { error } = await supabase
     .from("businesses")
-    .update({
-      ...allowedFields(fields, staff),
-      ...(canManageAll ? { owner_id: readOwner(formData) } : {}),
-    })
+    .update(allowedFields(fields, staff))
     .eq("id", id);
 
   if (error) {
@@ -192,6 +186,10 @@ export async function updateBusiness(
   }
 
   if (canManageAll) {
+    // Only administrators change the owner. The new owner leaves the team.
+    const ownerError = await setBusinessOwner(id, readOwner(formData));
+    if (ownerError) return { error: ownerError };
+
     const tagError = await syncTags(id, formData);
     if (tagError) return { error: tagError };
   }
@@ -212,8 +210,8 @@ export async function deleteBusiness(
 ): Promise<ActionState> {
   const auth = await authorize("listings.delete");
   if ("error" in auth) return auth;
-  if (!(await canEditBusiness(auth.staff, id))) {
-    return { error: "You can only delete listings assigned to your account." };
+  if (!(await businessRights(auth.staff, id)).includes("details")) {
+    return { error: "You can only delete listings you can edit." };
   }
 
   const supabase = createServerClient();

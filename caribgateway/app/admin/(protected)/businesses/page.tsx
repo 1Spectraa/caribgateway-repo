@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import DeleteBusinessButton from "@/components/admin/DeleteBusinessButton";
-import { can, requirePermission } from "@/lib/staff";
+import { businessRights, can, listingScope, requirePermission } from "@/lib/staff";
 import { LISTING_PERMISSIONS } from "@/lib/permissions";
 
 export default async function BusinessesPage() {
@@ -16,9 +16,10 @@ export default async function BusinessesPage() {
       "id, name, slug, business_type, status, is_featured, is_verified, destination_id, created_at",
     )
     .order("created_at", { ascending: false });
-  // Operators see only the businesses assigned to their account.
-  if (!can(staff, "listings.manage_all")) {
-    businessQuery = businessQuery.eq("owner_id", staff.id);
+  // Operators see only the businesses they own or are on the team for.
+  const scope = await listingScope(staff);
+  if (scope) {
+    businessQuery = businessQuery.or(scope);
   }
 
   const [{ data: businesses }, { data: destinations }] = await Promise.all([
@@ -28,6 +29,12 @@ export default async function BusinessesPage() {
 
   const destMap = Object.fromEntries(
     (destinations ?? []).map((d) => [d.id, d.name]),
+  );
+  // Each row shows only the actions this person holds on that listing.
+  const rightsById = new Map(
+    await Promise.all(
+      (businesses ?? []).map(async (b) => [b.id, await businessRights(staff, b.id)] as const),
+    ),
   );
 
   return (
@@ -123,19 +130,25 @@ export default async function BusinessesPage() {
                   </td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center justify-end gap-3">
-                      <Link
-                        href={`/admin/businesses/${b.id}/images`}
-                        className="text-gray-500 hover:text-gray-700 text-xs"
-                      >
-                        Images
-                      </Link>
-                      <Link
-                        href={`/admin/businesses/${b.id}/edit`}
-                        className="text-blue-600 hover:underline text-xs"
-                      >
-                        Edit
-                      </Link>
-                      {canDelete && <DeleteBusinessButton id={b.id} name={b.name} />}
+                      {rightsById.get(b.id)?.includes("photos") && (
+                        <Link
+                          href={`/admin/businesses/${b.id}/images`}
+                          className="text-gray-500 hover:text-gray-700 text-xs"
+                        >
+                          Images
+                        </Link>
+                      )}
+                      {rightsById.get(b.id)?.includes("details") && (
+                        <Link
+                          href={`/admin/businesses/${b.id}/edit`}
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Edit
+                        </Link>
+                      )}
+                      {canDelete && rightsById.get(b.id)?.includes("details") && (
+                        <DeleteBusinessButton id={b.id} name={b.name} />
+                      )}
                     </div>
                   </td>
                 </tr>

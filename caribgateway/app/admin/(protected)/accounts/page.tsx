@@ -31,12 +31,13 @@ export default async function AccountsPage() {
   const staff = await requirePermission("accounts.manage");
   const supabase = createServerClient();
 
-  const [{ data: profiles }, { data: owned }, listed] = await Promise.all([
+  const [{ data: profiles }, { data: owned }, { data: memberships }, listed] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, role, permissions, is_active")
+      .select("id, full_name, email, role, permissions, is_active, created_by")
       .order("full_name"),
     supabase.from("businesses").select("owner_id").not("owner_id", "is", null),
+    supabase.from("business_members").select("profile_id"),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -44,8 +45,13 @@ export default async function AccountsPage() {
   for (const b of owned ?? []) {
     if (b.owner_id) listingsOwned.set(b.owner_id, (listingsOwned.get(b.owner_id) ?? 0) + 1);
   }
+  const teamCount = new Map<string, number>();
+  for (const m of memberships ?? []) {
+    teamCount.set(m.profile_id, (teamCount.get(m.profile_id) ?? 0) + 1);
+  }
   const lastSignIn = new Map((listed.data?.users ?? []).map((u) => [u.id, u.last_sign_in_at ?? null]));
   const accounts = profiles ?? [];
+  const nameById = new Map(accounts.map((a) => [a.id, a.full_name || a.email || "Account"]));
 
   return (
     <div className="space-y-4">
@@ -97,6 +103,7 @@ export default async function AccountsPage() {
                 const permissions = account.permissions.filter(isPermissionKey);
                 const isSelf = account.id === staff.id;
                 const name = account.full_name || account.email || "Account";
+                const teams = teamCount.get(account.id) ?? 0;
                 return (
                   <tr key={account.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                     <td className="px-4 py-2.5">
@@ -105,13 +112,21 @@ export default async function AccountsPage() {
                         {isSelf && <span className="ml-1.5 text-xs text-gray-400">(you)</span>}
                       </div>
                       <div className="text-xs text-gray-500">{account.email}</div>
+                      {account.created_by && (
+                        <div className="text-xs text-gray-400">
+                          Added by {nameById.get(account.created_by) ?? "unknown account"}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-gray-600 hidden md:table-cell">
                       {ACCOUNT_TYPES[account.role as AccountType]?.label ?? account.role}
                     </td>
                     <td className="px-4 py-2.5 text-gray-600">{accessLabel(permissions)}</td>
                     <td className="px-4 py-2.5 text-gray-600 hidden lg:table-cell">
-                      {listingsOwned.get(account.id) ?? 0}
+                      <div>{listingsOwned.get(account.id) ?? 0}</div>
+                      <div className="text-xs text-gray-400">
+                        on {teams} {teams === 1 ? "team" : "teams"}
+                      </div>
                     </td>
                     <td className="px-4 py-2.5 text-gray-500 text-xs hidden lg:table-cell">
                       {formatDate(lastSignIn.get(account.id))}

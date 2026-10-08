@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
-import { authorize, canEditBusiness } from "@/lib/staff";
+import { authorizeBusinessRight } from "@/lib/staff";
 
 export type ServiceActionState = { error: string } | null;
 
@@ -11,11 +11,8 @@ export async function createService(
   _: ServiceActionState,
   formData: FormData,
 ): Promise<ServiceActionState> {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
+  const auth = await authorizeBusinessRight(businessId, "services");
   if ("error" in auth) return auth;
-  if (!(await canEditBusiness(auth.staff, businessId))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Service name is required." };
@@ -44,9 +41,6 @@ export async function createService(
 }
 
 export async function deleteService(serviceId: string, businessId: string) {
-  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
-  if ("error" in auth) return auth;
-
   const supabase = createServerClient();
 
   // Check the business the service really belongs to, not the businessId the form sent.
@@ -55,9 +49,10 @@ export async function deleteService(serviceId: string, businessId: string) {
     .select("business_id")
     .eq("id", serviceId)
     .maybeSingle();
-  if (service && !(await canEditBusiness(auth.staff, service.business_id))) {
-    return { error: "You can only change listings assigned to your account." };
-  }
+  if (!service) return { error: "That service no longer exists." };
+
+  const auth = await authorizeBusinessRight(service.business_id, "services");
+  if ("error" in auth) return auth;
 
   await supabase.from("business_services").delete().eq("id", serviceId);
   revalidatePath(`/admin/businesses/${businessId}/services`);

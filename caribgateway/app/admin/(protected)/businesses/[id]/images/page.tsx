@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import ImageManager from "@/components/admin/ImageManager";
-import { requireBusinessAccess } from "@/lib/staff";
+import { requireBusinessRight } from "@/lib/staff";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -10,7 +10,7 @@ interface Props {
 
 export default async function BusinessImagesPage({ params }: Props) {
   const { id } = await params;
-  await requireBusinessAccess(id);
+  await requireBusinessRight(id, "photos");
   const supabase = createServerClient();
 
   const [{ data: business }, { data: images }] = await Promise.all([

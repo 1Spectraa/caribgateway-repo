@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import DeleteBusinessButton from "@/components/admin/DeleteBusinessButton";
-import { can, requirePermission } from "@/lib/staff";
+import { businessRights, can, listingScope, requirePermission } from "@/lib/staff";
 import { LISTING_PERMISSIONS } from "@/lib/permissions";
 
 export default async function AccommodationsAdminPage() {
@@ -15,9 +15,10 @@ export default async function AccommodationsAdminPage() {
     .select("id, name, status, is_featured, is_verified, destination_id, category_id")
     .eq("business_type", "hotel")
     .order("name");
-  // Operators see only the accommodations assigned to their account.
-  if (!can(staff, "listings.manage_all")) {
-    accommodationQuery = accommodationQuery.eq("owner_id", staff.id);
+  // Operators see only the accommodations they own or are on the team for.
+  const scope = await listingScope(staff);
+  if (scope) {
+    accommodationQuery = accommodationQuery.or(scope);
   }
 
   const [{ data: rows }, { data: destinations }, { data: countries }, { data: categories }] =
@@ -32,6 +33,12 @@ export default async function AccommodationsAdminPage() {
   const countryById = new Map((countries ?? []).map((c) => [c.id, c]));
   const categoryById = new Map((categories ?? []).map((c) => [c.id, c]));
   const accommodations = rows ?? [];
+  // Each row shows only the actions this person holds on that accommodation.
+  const rightsById = new Map(
+    await Promise.all(
+      accommodations.map(async (a) => [a.id, await businessRights(staff, a.id)] as const),
+    ),
+  );
 
   return (
     <div className="space-y-4">
@@ -139,25 +146,33 @@ export default async function AccommodationsAdminPage() {
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center justify-end gap-3">
-                        <Link
-                          href={`/admin/businesses/${a.id}/services`}
-                          className="text-gray-500 hover:text-gray-700 text-xs"
-                        >
-                          Services
-                        </Link>
-                        <Link
-                          href={`/admin/businesses/${a.id}/images`}
-                          className="text-gray-500 hover:text-gray-700 text-xs"
-                        >
-                          Images
-                        </Link>
-                        <Link
-                          href={`/admin/businesses/${a.id}/edit?from=accommodations`}
-                          className="text-blue-600 hover:underline text-xs"
-                        >
-                          Edit
-                        </Link>
-                        {canDelete && <DeleteBusinessButton id={a.id} name={a.name} />}
+                        {rightsById.get(a.id)?.includes("services") && (
+                          <Link
+                            href={`/admin/businesses/${a.id}/services`}
+                            className="text-gray-500 hover:text-gray-700 text-xs"
+                          >
+                            Services
+                          </Link>
+                        )}
+                        {rightsById.get(a.id)?.includes("photos") && (
+                          <Link
+                            href={`/admin/businesses/${a.id}/images`}
+                            className="text-gray-500 hover:text-gray-700 text-xs"
+                          >
+                            Images
+                          </Link>
+                        )}
+                        {rightsById.get(a.id)?.includes("details") && (
+                          <Link
+                            href={`/admin/businesses/${a.id}/edit?from=accommodations`}
+                            className="text-blue-600 hover:underline text-xs"
+                          >
+                            Edit
+                          </Link>
+                        )}
+                        {canDelete && rightsById.get(a.id)?.includes("details") && (
+                          <DeleteBusinessButton id={a.id} name={a.name} />
+                        )}
                       </div>
                     </td>
                   </tr>

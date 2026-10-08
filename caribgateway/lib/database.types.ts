@@ -250,6 +250,8 @@ export type ProfileRow = {
   is_active: boolean;
   /** Permission keys granted to this account; see lib/permissions.ts. */
   permissions: string[];
+  /** The account that created this login account. Null for the emergency admin or unknown. */
+  created_by: string | null;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
@@ -262,7 +264,23 @@ export type ProfileInsert = {
   email?: string | null;
   is_active?: boolean;
   permissions?: string[];
+  created_by?: string | null;
   avatar_url?: string | null;
+};
+
+/** One person's access to one business. The owner is businesses.owner_id and is not listed here. */
+export type BusinessMemberRow = {
+  business_id: string;
+  profile_id: string;
+  /** Business rights held on this listing: details, services, photos, team. */
+  permissions: string[];
+  created_at: string;
+};
+
+export type BusinessMemberInsert = {
+  business_id: string;
+  profile_id: string;
+  permissions?: string[];
 };
 
 export type BusinessServiceRow = {
@@ -451,6 +469,12 @@ export interface Database {
         Row: SiteSettingRow;
         Insert: { key: string; value: unknown; updated_at?: string };
         Update: Partial<{ key: string; value: unknown; updated_at: string }>;
+        Relationships: [];
+      };
+      business_members: {
+        Row: BusinessMemberRow;
+        Insert: BusinessMemberInsert;
+        Update: Partial<BusinessMemberInsert>;
         Relationships: [];
       };
     };

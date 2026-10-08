@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
-import { can, type Staff } from "@/lib/staff";
+import { businessRights, can, listingScope, type Staff } from "@/lib/staff";
 
 const TYPE_LABELS: Record<string, string> = {
   hotel: "Accommodation",
@@ -18,12 +18,17 @@ const STATUS_CLASSES: Record<string, string> = {
 
 /** Home page for accounts that only edit the listings assigned to them. */
 export default async function OperatorDashboard({ staff }: { staff: Staff }) {
-  const { data: businesses } = await createServerClient()
+  const scope = await listingScope(staff);
+  let query = createServerClient()
     .from("businesses")
     .select("id, name, business_type, status, is_active")
-    .eq("owner_id", staff.id)
     .order("name");
-  const listings = businesses ?? [];
+  if (scope) query = query.or(scope);
+  const { data: businesses } = await query;
+  // Each listing carries this person's rights on it, which decide the links shown.
+  const listings = await Promise.all(
+    (businesses ?? []).map(async (b) => ({ ...b, rights: await businessRights(staff, b.id) })),
+  );
 
   return (
     <div className="space-y-6">
@@ -86,18 +91,29 @@ export default async function OperatorDashboard({ staff }: { staff: Staff }) {
                   </td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center justify-end gap-3">
-                      <Link href={`/admin/businesses/${b.id}/services`} className="text-gray-500 hover:text-gray-700 text-xs">
-                        Services & pricing
-                      </Link>
-                      <Link href={`/admin/businesses/${b.id}/images`} className="text-gray-500 hover:text-gray-700 text-xs">
-                        Photos
-                      </Link>
-                      <Link
-                        href={`/admin/businesses/${b.id}/edit${b.business_type === "hotel" ? "?from=accommodations" : ""}`}
-                        className="text-blue-600 hover:underline text-xs"
-                      >
-                        Edit
-                      </Link>
+                      {b.rights.includes("services") && (
+                        <Link href={`/admin/businesses/${b.id}/services`} className="text-gray-500 hover:text-gray-700 text-xs">
+                          Services & pricing
+                        </Link>
+                      )}
+                      {b.rights.includes("photos") && (
+                        <Link href={`/admin/businesses/${b.id}/images`} className="text-gray-500 hover:text-gray-700 text-xs">
+                          Photos
+                        </Link>
+                      )}
+                      {b.rights.includes("team") && (
+                        <Link href={`/admin/businesses/${b.id}/team`} className="text-gray-500 hover:text-gray-700 text-xs">
+                          Team
+                        </Link>
+                      )}
+                      {b.rights.includes("details") && (
+                        <Link
+                          href={`/admin/businesses/${b.id}/edit${b.business_type === "hotel" ? "?from=accommodations" : ""}`}
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Edit
+                        </Link>
+                      )}
                     </div>
                   </td>
                 </tr>

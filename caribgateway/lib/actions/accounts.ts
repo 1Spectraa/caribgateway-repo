@@ -63,6 +63,12 @@ async function assignBusinesses(service: Service, ownerId: string, businessIds: 
 
   if (businessIds.length > 0) {
     await service.from("businesses").update({ owner_id: ownerId }).in("id", businessIds);
+    // Owners hold every right, so they leave the team of the listings they now own.
+    await service
+      .from("business_members")
+      .delete()
+      .eq("profile_id", ownerId)
+      .in("business_id", businessIds);
   }
 }
 
@@ -95,6 +101,7 @@ export async function createAccount(_: AccountState, formData: FormData): Promis
     role: input.accountType,
     permissions: input.permissions,
     is_active: input.isActive,
+    created_by: auth.staff.isRoot ? null : auth.staff.id,
   };
   const { error: profileError } = await service.from("profiles").upsert(profile, { onConflict: "id" });
   if (profileError) return { error: profileError.message };

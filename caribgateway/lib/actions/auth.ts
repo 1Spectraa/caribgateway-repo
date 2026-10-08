@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
-import { ROOT_SUBJECT } from "@/lib/staff";
+import { permissionsWithTeams, ROOT_SUBJECT } from "@/lib/staff";
 import { canUseAdmin, isPermissionKey } from "@/lib/permissions";
 import type { Database } from "@/lib/database.types";
 
@@ -77,12 +77,14 @@ async function signIn(email: string, password: string): Promise<SignIn> {
     );
   }
 
-  const permissions = (profile?.permissions ?? []).filter(isPermissionKey);
+  // Team membership counts too, so someone added to a listing can use the admin area.
+  const granted = (profile?.permissions ?? []).filter(isPermissionKey);
+  const admin = canUseAdmin(await permissionsWithTeams(data.user.id, granted));
   return {
     ok: true,
     profileId: data.user.id,
-    user: { name, email: accountEmail, role: profile?.role ?? "user", admin: canUseAdmin(permissions) },
-    admin: canUseAdmin(permissions),
+    user: { name, email: accountEmail, role: profile?.role ?? "user", admin },
+    admin,
   };
 }
 

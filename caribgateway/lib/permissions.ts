@@ -48,6 +48,12 @@ export const PERMISSIONS = {
     description: "Create, edit, and delete accounts, and change their permissions.",
     group: "Accounts",
   },
+  "team.create_accounts": {
+    label: "Create accounts for their people",
+    description:
+      "Create login accounts for people they add to a listing. Those accounts get access to that listing only.",
+    group: "Business operator",
+  },
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
@@ -75,8 +81,13 @@ export const PRESETS = {
   },
   operator: {
     label: "Business operator",
-    description: "Edits only the listings assigned to the account.",
-    permissions: ["listings.manage_own"] as PermissionKey[],
+    description:
+      "Edits the listings assigned to the account. Can create listings, and add people to them.",
+    permissions: [
+      "listings.manage_own",
+      "listings.create",
+      "team.create_accounts",
+    ] as PermissionKey[],
   },
   editor: {
     label: "Content editor",
@@ -97,6 +108,37 @@ export const PRESETS = {
 } as const;
 
 export type PresetKey = keyof typeof PRESETS;
+
+/**
+ * Rights on one business, held by its owner and its team. Admins with
+ * 'Edit any listing' hold all of them on every business.
+ */
+export const BUSINESS_RIGHTS = {
+  details: {
+    label: "Edit details",
+    description: "Name, description, address, contact details, hours, and amenities.",
+  },
+  services: {
+    label: "Manage services and pricing",
+    description: "Add, edit, and remove services and their prices.",
+  },
+  photos: {
+    label: "Manage photos",
+    description: "Upload and remove photos, and choose the main one.",
+  },
+  team: {
+    label: "Manage people",
+    description: "Add people to this listing, change their access, and remove them.",
+  },
+} as const;
+
+export type BusinessRight = keyof typeof BUSINESS_RIGHTS;
+
+export const BUSINESS_RIGHT_KEYS = Object.keys(BUSINESS_RIGHTS) as BusinessRight[];
+
+export function isBusinessRight(value: string): value is BusinessRight {
+  return Object.prototype.hasOwnProperty.call(BUSINESS_RIGHTS, value);
+}
 
 /** Keys that show the global dashboard. Anyone else with admin access sees only their own listings. */
 export const GLOBAL_DASHBOARD_PERMISSIONS: PermissionKey[] = [

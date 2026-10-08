@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { currentSubject } from "@/lib/session";
 import {
+  BUSINESS_RIGHT_KEYS,
   canUseAdmin,
   hasAnyPermission,
+  isBusinessRight,
   isPermissionKey,
   PERMISSION_KEYS,
+  type BusinessRight,
   type PermissionKey,
 } from "@/lib/permissions";
 
@@ -17,13 +20,19 @@ export type Staff = {
   id: string;
   name: string;
   email: string;
+  /**
+   * Global permissions. An account on at least one business team also gets
+   * 'listings.manage_own', so it can open the listings it was added to.
+   */
   permissions: PermissionKey[];
   /** The emergency account. It cannot be edited from the Accounts page. */
   isRoot: boolean;
 };
 
-/** The signed-in account with its current permissions, or null if signed out, suspended, or deleted. Server only. */
-// Memoised per request, so the layout, the page, and any action share one lookup.
+/**
+ * The signed-in account, or null if signed out, suspended, or deleted. Server only.
+ * Memoised per request, so the layout, the page, and any action share one lookup.
+ */
 export const getStaff = cache(async (): Promise<Staff | null> => {
   const subject = await currentSubject();
   if (!subject) return null;
@@ -38,7 +47,8 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     };
   }
 
-  const { data: profile } = await createServerClient()
+  const service = createServerClient();
+  const { data: profile } = await service
     .from("profiles")
     .select("id, full_name, email, permissions, is_active")
     .eq("id", subject)
@@ -50,10 +60,27 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     id: profile.id,
     name: profile.full_name || profile.email || "Account",
     email: profile.email ?? "",
-    permissions: profile.permissions.filter(isPermissionKey),
+    permissions: await permissionsWithTeams(profile.id, profile.permissions.filter(isPermissionKey)),
     isRoot: false,
   };
 });
+
+/**
+ * The permissions an account holds: its own, plus 'listings.manage_own' when it
+ * is on a business team, so it can open the listings it was added to.
+ * Server only. Sign-in uses it too, before a session cookie exists.
+ */
+export async function permissionsWithTeams(
+  profileId: string,
+  granted: PermissionKey[],
+): Promise<PermissionKey[]> {
+  if (granted.includes("listings.manage_own")) return granted;
+  const { count } = await createServerClient()
+    .from("business_members")
+    .select("business_id", { count: "exact", head: true })
+    .eq("profile_id", profileId);
+  return (count ?? 0) > 0 ? [...granted, "listings.manage_own"] : granted;
+}
 
 /** Synchronous check on an already-loaded staff member. */
 export function can(staff: Staff, key: PermissionKey): boolean {
@@ -88,25 +115,74 @@ export async function authorize(
   return { staff };
 }
 
-/**
- * Whether this person may change one business: any business with 'Edit any listing',
- * or one they own with 'Edit own listings' or 'Create listings' (a creator edits what they create).
- */
-export async function canEditBusiness(staff: Staff, businessId: string): Promise<boolean> {
-  if (can(staff, "listings.manage_all")) return true;
-  if (!can(staff, "listings.manage_own") && !can(staff, "listings.create")) return false;
+// ---------------------------------------------------------------------------
+// Business rights: what a person may do on one listing.
+// ---------------------------------------------------------------------------
 
-  const { data } = await createServerClient()
+/**
+ * The rights this person holds on one business. Admins with 'Edit any listing'
+ * and the owner hold all of them. Everyone else holds the rights their team
+ * membership gives. The result is empty if they cannot operate listings at all.
+ */
+export async function businessRights(staff: Staff, businessId: string): Promise<BusinessRight[]> {
+  if (can(staff, "listings.manage_all")) return [...BUSINESS_RIGHT_KEYS];
+  if (!can(staff, "listings.manage_own") && !can(staff, "listings.create")) return [];
+
+  const service = createServerClient();
+  const { data: business } = await service
     .from("businesses")
     .select("owner_id")
     .eq("id", businessId)
     .maybeSingle();
-  return data?.owner_id === staff.id;
+  if (!business) return [];
+  if (business.owner_id === staff.id) return [...BUSINESS_RIGHT_KEYS];
+
+  const { data: membership } = await service
+    .from("business_members")
+    .select("permissions")
+    .eq("business_id", businessId)
+    .eq("profile_id", staff.id)
+    .maybeSingle();
+  return (membership?.permissions ?? []).filter(isBusinessRight);
 }
 
-/** For business pages: sends people who cannot edit this listing back to the business list. */
-export async function requireBusinessAccess(businessId: string): Promise<Staff> {
+/** For business pages: needs one specific right on this listing, otherwise goes back to the business list. */
+export async function requireBusinessRight(businessId: string, right: BusinessRight): Promise<Staff> {
   const staff = await requireStaff();
-  if (!(await canEditBusiness(staff, businessId))) redirect("/admin/businesses");
+  if (!(await businessRights(staff, businessId)).includes(right)) redirect("/admin/businesses");
   return staff;
+}
+
+/** For server actions: needs one specific right on this listing. */
+export async function authorizeBusinessRight(
+  businessId: string,
+  right: BusinessRight,
+): Promise<{ staff: Staff } | { error: string }> {
+  const staff = await getStaff();
+  if (!staff || !canUseAdmin(staff.permissions)) {
+    return { error: "Your session has expired. Sign in again." };
+  }
+  if (!(await businessRights(staff, businessId)).includes(right)) {
+    return { error: "You don't have permission to change this part of the listing." };
+  }
+  return { staff };
+}
+
+/**
+ * The filter for the listings this person can see: the ones they own and the
+ * ones they were added to. Null means every listing (admins with 'Edit any listing').
+ * Pass the result to query.or(...).
+ */
+export async function listingScope(staff: Staff): Promise<string | null> {
+  if (can(staff, "listings.manage_all")) return null;
+
+  const { data: memberships } = await createServerClient()
+    .from("business_members")
+    .select("business_id")
+    .eq("profile_id", staff.id);
+
+  const filters = [`owner_id.eq.${staff.id}`];
+  const ids = (memberships ?? []).map((m) => m.business_id);
+  if (ids.length > 0) filters.push(`id.in.(${ids.join(",")})`);
+  return filters.join(",");
 }

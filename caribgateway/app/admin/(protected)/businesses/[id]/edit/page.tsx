@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import BusinessForm from "@/components/admin/BusinessForm";
 import { loadOwnerOptions } from "@/lib/account-options";
-import { can, requireBusinessAccess } from "@/lib/staff";
+import { businessRights, can, requireBusinessRight } from "@/lib/staff";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,7 +11,8 @@ interface Props {
 
 export default async function EditBusinessPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const staff = await requireBusinessAccess(id);
+  const staff = await requireBusinessRight(id, "details");
+  const rights = await businessRights(staff, id);
   const { from } = await searchParams;
   const canManageAll = can(staff, "listings.manage_all");
   const supabase = createServerClient();
@@ -66,18 +67,30 @@ export default async function EditBusinessPage({ params, searchParams }: Props) 
           Edit: {business.name}
         </h1>
         <div className="flex items-center gap-4">
-          <a
-            href={`/admin/businesses/${id}/services`}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Services & Pricing →
-          </a>
-          <a
-            href={`/admin/businesses/${id}/images`}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Manage Images →
-          </a>
+          {rights.includes("services") && (
+            <a
+              href={`/admin/businesses/${id}/services`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Services & Pricing →
+            </a>
+          )}
+          {rights.includes("photos") && (
+            <a
+              href={`/admin/businesses/${id}/images`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Manage Images →
+            </a>
+          )}
+          {rights.includes("team") && (
+            <a
+              href={`/admin/businesses/${id}/team`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Team & access →
+            </a>
+          )}
         </div>
       </div>
       <div className="bg-white border border-gray-200 rounded p-6">
