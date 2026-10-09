@@ -6,6 +6,7 @@ import { KIND_LABEL } from "@/lib/partner-listings";
 import { Icon, TYPE_ICON } from "@/components/dashboard/icons";
 import ListingTabs, { type ListingTab } from "@/components/dashboard/ListingTabs";
 import { LiveSwitch, SendForApprovalButton } from "@/components/dashboard/ListingActions";
+import DeleteListingButton from "@/components/dashboard/DeleteListingButton";
 import { Notice, StatusPill, buttonClass, cardClass, listingState } from "@/components/dashboard/ui";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,8 @@ export default async function ListingLayout({
   const base = `/dashboard/listings/${id}`;
   const canToggle = business.status === "published" && (business.owner_id === staff.id || can(staff, "listings.publish"));
   const canSend = business.status === "draft" && rights.includes("details");
+  // The same rule as deleteBusiness: the owner, or anyone with 'Delete listings'.
+  const canDelete = business.owner_id === staff.id || can(staff, "listings.delete");
 
   const tabs: ListingTab[] = [
     { href: base, label: "Overview" },
@@ -82,6 +85,7 @@ export default async function ListingLayout({
               View on site
             </a>
           )}
+          {canDelete && <DeleteListingButton id={id} name={business.name} />}
         </div>
       </header>
 

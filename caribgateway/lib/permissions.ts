@@ -197,7 +197,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Approvals", href: "/admin/approvals", icon: "✓", anyOf: ["listings.publish"] },
   { label: "Businesses", href: "/admin/businesses", icon: "🏢", anyOf: ["listings.manage_all"] },
   { label: "Accommodations", href: "/admin/accommodations", icon: "🛏", anyOf: ["listings.manage_all"] },
-  { label: "Statistics", href: "/dashboard/statistics", icon: "📈", anyOf: ["listings.manage_all"] },
+  { label: "Statistics", href: "/admin/statistics", icon: "📈", anyOf: LISTING_PERMISSIONS },
   { label: "Destinations", href: "/admin/destinations", icon: "🗺", anyOf: ["catalog.manage"] },
   { label: "Countries", href: "/admin/countries", icon: "🌍", anyOf: ["catalog.manage"] },
   { label: "Categories", href: "/admin/categories", icon: "🏷", anyOf: ["catalog.manage"] },

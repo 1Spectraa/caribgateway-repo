@@ -4,6 +4,7 @@ import { can, requireDashboard } from "@/lib/staff";
 import { KIND_LABEL, loadPartnerListings, type PartnerListing } from "@/lib/partner-listings";
 import { Icon, TYPE_ICON } from "@/components/dashboard/icons";
 import { LiveSwitch, SendForApprovalButton } from "@/components/dashboard/ListingActions";
+import DeleteListingButton from "@/components/dashboard/DeleteListingButton";
 import {
   EmptyState,
   Notice,
@@ -132,6 +133,7 @@ export default async function ListingsPage({
             const manage = `/dashboard/listings/${listing.id}`;
             const canToggle = listing.status === "published" && (listing.isOwner || canPublish);
             const canSend = listing.status === "draft" && rights.includes("details");
+            const canDelete = listing.isOwner || can(staff, "listings.delete");
             return (
               <li key={listing.id}>
                 <article className={cx(cardClass, "flex h-full flex-col overflow-hidden")}>
@@ -190,6 +192,7 @@ export default async function ListingsPage({
                       </Link>
                       {canToggle && <LiveSwitch businessId={listing.id} online={listing.isActive} />}
                       {canSend && <SendForApprovalButton businessId={listing.id} />}
+                      {canDelete && <DeleteListingButton id={listing.id} name={listing.name} />}
                     </div>
                   </div>
                 </article>

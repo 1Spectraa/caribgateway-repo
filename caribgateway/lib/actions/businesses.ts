@@ -322,10 +322,8 @@ async function listingPhotoPaths(businessId: string): Promise<string[]> {
 /** The listing's owner can delete it, and so can an administrator with 'Delete listings'. */
 export async function deleteBusiness(
   id: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _: ActionState,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _formData: FormData,
+  formData: FormData,
 ): Promise<ActionState> {
   if (!UUID.test(id)) return { error: "That listing doesn't exist." };
 
@@ -352,5 +350,5 @@ export async function deleteBusiness(
 
   revalidatePublicSite();
   revalidateListings();
-  redirect(can(staff, "listings.manage_all") ? "/admin/businesses" : "/dashboard/listings");
+  redirect(returnPath(formData, staff));
 }
