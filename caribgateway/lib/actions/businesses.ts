@@ -144,7 +144,8 @@ function parseBusinessForm(formData: FormData) {
 
   return {
     name,
-    slug: rawSlug || toSlug(name ?? ""),
+    // Undefined when the form does not send one, so saving never changes an existing public URL.
+    slug: rawSlug || undefined,
     destination_id: formData.get("destination_id") as string,
     category_id: formData.get("category_id") as string,
     business_type: formData.get("business_type") as BusinessType,
@@ -240,7 +241,7 @@ export async function createBusiness(
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("businesses")
-    .insert({ ...allowedFields(fields, staff), ...approval, owner_id })
+    .insert({ ...allowedFields(fields, staff), slug: fields.slug ?? toSlug(fields.name), ...approval, owner_id })
     .select("id")
     .single();
 
