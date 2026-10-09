@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useRef } from "react";
 import {
   createCountry,
@@ -21,7 +23,7 @@ export default function CountryForm({ country }: { country?: CountryRow }) {
   const slugTouched = useRef(!!country?.slug);
 
   return (
-    <form action={formAction} className="space-y-6 max-w-2xl">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-6 max-w-2xl">
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
           {state.error}

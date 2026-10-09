@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useRef } from "react";
 import { createTag, updateTag, type ActionState } from "@/lib/actions/tags";
 import type { TagRow } from "@/lib/database.types";
@@ -17,7 +19,7 @@ export default function TagForm({ tag }: { tag?: TagRow }) {
   const slugTouched = useRef(!!tag?.slug);
 
   return (
-    <form action={formAction} className="space-y-6 max-w-xl">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-6 max-w-xl">
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
           {state.error}

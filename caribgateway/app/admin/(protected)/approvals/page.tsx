@@ -46,7 +46,7 @@ export default async function ApprovalsPage() {
   await requirePermission("listings.publish");
   const supabase = createServerClient();
 
-  const { data: waiting } = await supabase
+  const { data: waiting, error: waitingError } = await supabase
     .from("businesses")
     .select("id, name, business_type, owner_id, submitted_at, short_description, description, phone, email, website, hours_of_operation")
     .eq("status", "pending")
@@ -86,6 +86,13 @@ export default async function ApprovalsPage() {
           New listings from operators wait here. Approving one publishes it straight away.
         </p>
       </div>
+
+      {waitingError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+          Approvals couldn&apos;t be loaded: {waitingError.message}. If this mentions a missing column, run
+          migration 0017 in Supabase, then reload.
+        </div>
+      )}
 
       {listings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded p-8 text-center text-sm text-gray-500">

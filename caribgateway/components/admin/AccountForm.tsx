@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useState } from "react";
 import { createAccount, updateAccount, type AccountState } from "@/lib/actions/accounts";
 import {
@@ -60,7 +62,7 @@ export default function AccountForm({ account, businesses, isSelf = false }: Acc
   const needle = filter.trim().toLowerCase();
 
   return (
-    <form action={formAction} className="space-y-8 max-w-3xl">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-8 max-w-3xl">
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
           {state.error}

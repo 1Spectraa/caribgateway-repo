@@ -78,15 +78,20 @@ function percent(part: number, whole: number): number | null {
   return whole > 0 ? Math.round((part / whole) * 100) : null;
 }
 
-async function fetchEvents(businessIds: string[], from: string, to: string): Promise<EventRow[]> {
-  if (businessIds.length === 0) return [];
-  const { data } = await createServerClient()
+/** Event rows for these listings in a date range. An error is returned, never hidden as zero. */
+async function fetchEvents(
+  businessIds: string[],
+  from: string,
+  to: string,
+): Promise<{ rows: EventRow[]; error: string | null }> {
+  if (businessIds.length === 0) return { rows: [], error: null };
+  const { data, error } = await createServerClient()
     .from("listing_events")
     .select("business_id, day, kind, count")
     .in("business_id", businessIds)
     .gte("day", from)
     .lte("day", to);
-  return (data ?? []) as EventRow[];
+  return { rows: (data ?? []) as EventRow[], error: error?.message ?? null };
 }
 
 /** Counts per day for one listing (all kinds added together per kind). */
@@ -159,7 +164,9 @@ function priceSpan(min: number, max: number, currency: string): string {
 export async function loadDailyRows(businessId: string, range: StatsRange) {
   const today = utcToday();
   const from = addDays(today, -(range - 1));
-  const byDay = countsByDay(await fetchEvents([businessId], from, today), businessId);
+  const { rows, error } = await fetchEvents([businessId], from, today);
+  if (error) throw new Error(`Could not read visit counts: ${error}`);
+  const byDay = countsByDay(rows, businessId);
   return listDays(from, today).map((day) => ({ day, ...(byDay.get(day) ?? emptyCounts()) }));
 }
 
@@ -180,7 +187,7 @@ export async function loadListingStats(businessId: string, range: StatsRange) {
   const meta = (business.metadata ?? {}) as Record<string, unknown>;
   const social = (business.social_links ?? {}) as Record<string, unknown>;
 
-  const [category, photos, services, servicePhotos, team, firstEvent, events, marketListings] =
+  const [category, photos, services, servicePhotos, team, firstEvent, eventsResult, marketListings] =
     await Promise.all([
       supabase.from("categories").select("name").eq("id", business.category_id).maybeSingle(),
       supabase
@@ -214,11 +221,27 @@ export async function loadListingStats(businessId: string, range: StatsRange) {
         .eq("is_active", true),
     ]);
 
+  // Failed reads are listed for the page to show, so a missing table is never mistaken for no visits.
+  const problems: string[] = [];
+  const failed = (table: string, error: { message: string } | null) => {
+    if (error) problems.push(`${table}: ${error.message}`);
+  };
+  failed("categories", category.error);
+  failed("business_images", photos.error);
+  failed("business_services", services.error);
+  failed("business_service_images", servicePhotos.error);
+  failed("business_members", team.error);
+  failed("listing_events", firstEvent.error);
+  failed("businesses", marketListings.error);
+  if (eventsResult.error) problems.push(`listing_events: ${eventsResult.error}`);
+
   const marketIds = (marketListings.data ?? []).map((row) => row.id);
-  const marketEvents = await fetchEvents(marketIds, marketFrom, today);
+  const marketEventsResult = await fetchEvents(marketIds, marketFrom, today);
+  if (marketEventsResult.error) problems.push(`listing_events: ${marketEventsResult.error}`);
+  const marketEvents = marketEventsResult.rows;
 
   // Traffic.
-  const byDay = countsByDay(events, businessId);
+  const byDay = countsByDay(eventsResult.rows, businessId);
   const days = listDays(from, today);
   const previousDays = listDays(previousFrom, previousTo);
   const daily = days.map((day, i) => {
@@ -436,6 +459,7 @@ export async function loadListingStats(businessId: string, range: StatsRange) {
   const statusKey = isLive ? "live" : business.status === "published" ? "off" : business.status;
 
   return {
+    problems: [...new Set(problems)],
     listing: {
       id: business.id,
       name: business.name,

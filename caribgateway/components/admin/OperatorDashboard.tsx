@@ -63,7 +63,7 @@ export default async function OperatorDashboard({ staff }: { staff: Staff }) {
     )
     .order("name");
   if (scope) query = query.or(scope);
-  const { data } = await query;
+  const { data, error: listError } = await query;
   const listings = (data ?? []) as Listing[];
   const ids = listings.map((l) => l.id);
 
@@ -174,6 +174,13 @@ export default async function OperatorDashboard({ staff }: { staff: Staff }) {
         <Tile label="Views, last 30 days" value={totalViews} href="/admin/statistics" tone="text-brand-teal" />
         <Tile label="Contact clicks, last 30 days" value={totalContacts} href="/admin/statistics" tone="text-brand-coral" />
       </div>
+
+      {listError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+          Your listings couldn&apos;t be loaded: {listError.message}. If this mentions a missing column, run
+          migration 0017 in Supabase, then reload.
+        </div>
+      )}
 
       {listings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded p-8 text-center text-sm text-gray-500">

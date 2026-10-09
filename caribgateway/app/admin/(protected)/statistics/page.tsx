@@ -49,6 +49,19 @@ function longDay(day: string): string {
   });
 }
 
+/** The listing's name with its state, so two similar names are easy to tell apart in the picker. */
+function pickerLabel(listing: { name: string; status: string; is_active: boolean }): string {
+  const state =
+    listing.status === "published"
+      ? listing.is_active
+        ? "live"
+        : "off"
+      : listing.status === "pending"
+        ? "awaiting approval"
+        : listing.status;
+  return `${listing.name} (${state})`;
+}
+
 function formatDate(value: string | null): string {
   return value ? new Date(value).toISOString().slice(0, 10) : "Not yet";
 }
@@ -105,9 +118,12 @@ export default async function StatisticsPage({ searchParams }: { searchParams: S
 
   // The picker lists only the listings this person can see, so anything else is never loaded.
   const scope = await listingScope(staff);
-  let optionsQuery = createServerClient().from("businesses").select("id, name, business_type").order("name");
+  let optionsQuery = createServerClient()
+    .from("businesses")
+    .select("id, name, business_type, status, is_active")
+    .order("name");
   if (scope) optionsQuery = optionsQuery.or(scope);
-  const { data: options } = await optionsQuery;
+  const { data: options, error: optionsError } = await optionsQuery;
   const choices = options ?? [];
 
   if (choices.length === 0) {
@@ -115,7 +131,14 @@ export default async function StatisticsPage({ searchParams }: { searchParams: S
       <div className="space-y-4">
         <h1 className="text-xl font-bold text-gray-900">Statistics</h1>
         <div className="rounded border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
-          You don&apos;t have any listings yet. Statistics appear here once you do.
+          {optionsError ? (
+            <>
+              Your listings couldn&apos;t be loaded: {optionsError.message}. If this mentions a missing column,
+              run migration 0017 in Supabase, then reload.
+            </>
+          ) : (
+            "You don't have any listings yet. Statistics appear here once you do."
+          )}
         </div>
       </div>
     );
@@ -146,6 +169,21 @@ export default async function StatisticsPage({ searchParams }: { searchParams: S
         </a>
       </header>
 
+      {(optionsError || stats.problems.length > 0) && (
+        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="font-medium">Some figures couldn&apos;t be loaded.</p>
+          <ul className="mt-1 list-disc pl-5 text-xs">
+            {optionsError && <li>listings: {optionsError.message}</li>}
+            {stats.problems.map((problem) => (
+              <li key={problem}>{problem}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs">
+            If these mention a missing column or table, run migration 0017 in Supabase, then reload.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <form method="get" className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="range" value={days} />
@@ -158,7 +196,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: S
             >
               {choices.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {pickerLabel(c)}
                 </option>
               ))}
             </select>

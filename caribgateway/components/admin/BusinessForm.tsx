@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useRef, useState, useEffect } from "react";
 import {
   createBusiness,
@@ -194,7 +196,7 @@ export default function BusinessForm({
   const meta = (business?.metadata ?? {}) as Record<string, unknown>;
 
   return (
-    <form action={formAction} className="space-y-8 max-w-3xl">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-8 max-w-3xl">
       <input type="hidden" name="return_to" value={returnTo} />
       {lockedType && <input type="hidden" name="business_type" value={lockedType} />}
       {state?.error && (

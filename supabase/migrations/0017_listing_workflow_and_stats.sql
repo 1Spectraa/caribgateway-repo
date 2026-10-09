@@ -129,3 +129,8 @@ COMMENT ON TABLE listing_events IS
 
 COMMENT ON COLUMN businesses.review_note IS
   'Why an administrator sent the listing back to draft. Shown to its operator.';
+
+-- Ask the API to reload its schema cache, so the new columns and tables are
+-- visible straight away. Without this it can keep answering "not found in the
+-- schema cache" until it reloads on its own.
+NOTIFY pgrst, 'reload schema';

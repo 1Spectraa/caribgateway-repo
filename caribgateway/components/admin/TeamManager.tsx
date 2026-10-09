@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useState } from "react";
 import {
   addBusinessMember,
@@ -86,7 +88,7 @@ function OwnerForm({
   const options = missingOwner ? [...owners, missingOwner] : owners;
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-3">
       <FormError message={state?.error} />
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-full sm:w-72">
@@ -203,7 +205,7 @@ function MemberEditForm({
   );
 
   return (
-    <form action={formAction} className="space-y-4 bg-gray-50 border border-gray-200 rounded p-4">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-4 bg-gray-50 border border-gray-200 rounded p-4">
       <FormError message={state?.error} />
       <RightsFields
         viewer={viewer}
@@ -293,7 +295,7 @@ function AddMemberForm({
   const [mode, setMode] = useState<"existing" | "new">(viewer.isAdmin ? "existing" : "new");
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={keepFieldsOnSubmit(formAction)} className="space-y-5">
       <FormError message={state?.error} />
 
       {viewer.isAdmin ? (

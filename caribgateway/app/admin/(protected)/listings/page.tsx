@@ -84,7 +84,7 @@ export default async function ListingsPage({
   const memberRows = staff.isRoot
     ? []
     : ((await supabase.from("business_members").select("business_id, permissions").eq("profile_id", staff.id)).data ?? []);
-  const { data } = await query;
+  const { data, error: listError } = await query;
   const listings = (data ?? []) as Listing[];
 
   const memberRights = new Map(memberRows.map((m) => [m.business_id, m.permissions.filter(isBusinessRight)]));
@@ -128,6 +128,13 @@ export default async function ListingsPage({
           </div>
         )}
       </div>
+
+      {listError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+          Your listings couldn&apos;t be loaded: {listError.message}. If this mentions a missing column, run
+          migration 0017 in Supabase, then reload.
+        </div>
+      )}
 
       {submitted === "1" && (
         <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm">

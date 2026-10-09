@@ -1,5 +1,7 @@
 "use client";
 
+import { keepFieldsOnSubmit } from "@/components/admin/keep-fields";
+
 import { useActionState, useState, useTransition } from "react";
 import { approveListing, rejectListing, type ListingActionState } from "@/lib/actions/listings";
 
@@ -43,7 +45,7 @@ export default function ApprovalActions({ businessId }: { businessId: string }) 
       </div>
 
       {showReject && (
-        <form action={rejectAction} className="space-y-2">
+        <form onSubmit={keepFieldsOnSubmit(rejectAction)} className="space-y-2">
           {rejectState?.error && <p className="text-xs text-red-500">{rejectState.error}</p>}
           <label className="block text-xs font-medium text-gray-700" htmlFor={`note-${businessId}`}>
             What should the operator change?
