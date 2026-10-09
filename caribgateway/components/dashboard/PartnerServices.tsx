@@ -431,7 +431,7 @@ export default function PartnerServices({ businessId, services }: { businessId: 
       {services.length === 0 ? (
         !adding && (
           <EmptyState icon="tag" title="No services yet">
-            Add your first service so visitors know what you offer, and what it costs.
+            Add your first one, with a price and a few photos if you like.
           </EmptyState>
         )
       ) : (

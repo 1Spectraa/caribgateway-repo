@@ -19,12 +19,14 @@ export function buttonClass(
   variant: "primary" | "secondary" | "ghost" | "danger" = "primary",
   extra?: string,
 ): string {
-  const base = `inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`;
+  // Size and weight live with each variant, so no two utilities for the same property meet in the CSS.
+  const base = `inline-flex items-center justify-center gap-2 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`;
   const variants = {
-    primary: "bg-brand-teal text-white shadow-sm hover:bg-brand-teal-dark",
-    secondary: "bg-white text-brand-navy shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50",
-    ghost: "px-3 py-2 font-medium text-brand-navy hover:bg-slate-100",
-    danger: "px-3 py-2 font-medium text-rose-600 hover:bg-rose-50",
+    primary: "bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-teal-dark",
+    secondary:
+      "bg-white px-5 py-2.5 text-sm font-semibold text-brand-navy shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50",
+    ghost: "px-3 py-2 text-sm font-medium text-brand-navy hover:bg-slate-100",
+    danger: "px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50",
   } as const;
   return cx(base, variants[variant], extra);
 }
