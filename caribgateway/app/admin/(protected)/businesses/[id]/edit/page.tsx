@@ -101,13 +101,7 @@ export default async function EditBusinessPage({ params, searchParams }: Props) 
           business={business}
           selectedTagIds={(assignedTags ?? []).map((row) => row.tag_id)}
           lockedType={fromAccommodations ? "hotel" : undefined}
-          returnTo={
-            !canManageAll
-              ? "/admin/listings"
-              : fromAccommodations
-                ? "/admin/accommodations"
-                : "/admin/businesses"
-          }
+          returnTo={fromAccommodations ? "/admin/accommodations" : "/admin/businesses"}
           canManageAll={canManageAll}
           canPublish={can(staff, "listings.publish")}
           owners={owners}

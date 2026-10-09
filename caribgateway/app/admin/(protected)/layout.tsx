@@ -1,16 +1,16 @@
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import { requireStaff } from "@/lib/staff";
+import { requireAdminPanel } from "@/lib/staff";
 import { visibleAdminNav } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
-/** Every page under /admin except sign-in. Checks the session, then shows only the sections this account can use. */
+/** Every page under /admin except sign-in. Checks for admin access, then shows only the sections this account can use. */
 export default async function ProtectedAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const staff = await requireStaff();
+  const staff = await requireAdminPanel();
   const nav = visibleAdminNav(staff.permissions);
 
   return (

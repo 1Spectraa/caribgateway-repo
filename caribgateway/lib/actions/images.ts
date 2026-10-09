@@ -71,6 +71,7 @@ export async function uploadBusinessImage(
   if (insertError) return { error: insertError.message };
 
   revalidatePath(`/admin/businesses/${businessId}/images`);
+  revalidatePath("/dashboard", "layout");
   return { url: publicUrl };
 }
 
@@ -120,6 +121,7 @@ export async function deleteBusinessImage(imageId: string, businessId: string) {
   }
 
   revalidatePath(`/admin/businesses/${businessId}/images`);
+  revalidatePath("/dashboard", "layout");
   return { success: true };
 }
 
@@ -153,5 +155,6 @@ export async function setPrimaryImage(imageId: string, businessId: string) {
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/businesses/${businessId}/images`);
+  revalidatePath("/dashboard", "layout");
   return { success: true };
 }

@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
 import { permissionsWithTeams, ROOT_SUBJECT } from "@/lib/staff";
-import { canUseAdmin, isPermissionKey } from "@/lib/permissions";
+import { canUseAdminPanel, canUseDashboard, isPermissionKey } from "@/lib/permissions";
 import type { Database } from "@/lib/database.types";
 
 export type AuthState = { error: string } | null;
@@ -16,11 +16,12 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const ONE_WEEK = 60 * 60 * 24 * 7;
 
-type CgUserPayload = { name: string; email: string; role: string; admin: boolean };
+/** `admin`: may open the admin panel. `operator`: may open the operator dashboard. */
+type CgUserPayload = { name: string; email: string; role: string; admin: boolean; operator: boolean };
 
 /**
- * Display cookie for the Navbar ("Hi, Name", "Admin Panel" link). It is not a
- * security boundary: every admin page and action checks the signed session.
+ * Display cookie for the Navbar ("Hi, Name", and the Admin Panel or Dashboard link).
+ * It is not a security boundary: every page and action checks the signed session.
  */
 async function setUserCookie(payload: CgUserPayload) {
   const jar = await cookies();
@@ -42,7 +43,7 @@ async function clearUserCookies() {
 }
 
 type SignIn =
-  | { ok: true; profileId: string; user: CgUserPayload; admin: boolean }
+  | { ok: true; profileId: string; user: CgUserPayload; admin: boolean; operator: boolean }
   | { ok: false; error: string };
 
 /** Checks the email and password, then loads the account. Suspended accounts are refused. */
@@ -77,20 +78,27 @@ async function signIn(email: string, password: string): Promise<SignIn> {
     );
   }
 
-  // Team membership counts too, so someone added to a listing can use the admin area.
-  const granted = (profile?.permissions ?? []).filter(isPermissionKey);
-  const admin = canUseAdmin(await permissionsWithTeams(data.user.id, granted));
+  // Team membership counts too, so someone added to a listing can use the dashboard.
+  const granted = await permissionsWithTeams(data.user.id, (profile?.permissions ?? []).filter(isPermissionKey));
+  const admin = canUseAdminPanel(granted);
+  const operator = canUseDashboard(granted);
   return {
     ok: true,
     profileId: data.user.id,
-    user: { name, email: accountEmail, role: profile?.role ?? "user", admin },
+    user: { name, email: accountEmail, role: profile?.role ?? "user", admin, operator },
     admin,
+    operator,
   };
 }
 
+/** Where an account goes after signing in: admins to the admin panel, operators to their dashboard. */
+function homeFor(result: { admin: boolean }): string {
+  return result.admin ? "/admin" : "/dashboard";
+}
+
 // ---------------------------------------------------------------------------
-// Admin sign-in. The account needs at least one admin permission.
-// Falls back to email "admin" + ADMIN_PASSWORD for emergency access.
+// Admin sign-in. Admins go to the admin panel. Operators who land here are sent
+// to their dashboard. Falls back to email "admin" + ADMIN_PASSWORD for emergency access.
 // ---------------------------------------------------------------------------
 export async function loginAdmin(_: AuthState, formData: FormData): Promise<AuthState> {
   const email = (formData.get("email") as string)?.trim();
@@ -100,12 +108,12 @@ export async function loginAdmin(_: AuthState, formData: FormData): Promise<Auth
 
   const result = await signIn(email, password);
   if (result.ok) {
-    if (!result.admin) {
-      return { error: "This account doesn't have admin access. Ask an administrator for permissions." };
+    if (!result.admin && !result.operator) {
+      return { error: "This account doesn't have access yet. Ask an administrator for permissions." };
     }
     await setSessionCookie(result.profileId);
     await setUserCookie(result.user);
-    redirect("/admin");
+    redirect(homeFor(result));
   }
 
   // The emergency account has no email address, so its username is "admin".
@@ -113,12 +121,35 @@ export async function loginAdmin(_: AuthState, formData: FormData): Promise<Auth
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (isEmergency && adminPassword && password === adminPassword) {
     await setSessionCookie(ROOT_SUBJECT);
-    await setUserCookie({ name: "Emergency admin", email: "admin", role: "admin", admin: true });
+    await setUserCookie({ name: "Emergency admin", email: "admin", role: "admin", admin: true, operator: false });
     redirect("/admin");
   }
 
   // Supabase's "email is invalid" message means nothing for the username, so show a plain one.
   return { error: isEmergency ? "Invalid email or password." : result.error };
+}
+
+// ---------------------------------------------------------------------------
+// Operator dashboard sign-in. Operators go to their dashboard, and admins to the
+// admin panel. There is no emergency login here.
+// ---------------------------------------------------------------------------
+export async function loginDashboard(_: AuthState, formData: FormData): Promise<AuthState> {
+  const email = (formData.get("email") as string)?.trim();
+  const password = formData.get("password") as string;
+
+  if (!email || !password) return { error: "Email and password are required." };
+
+  const result = await signIn(email, password);
+  if (!result.ok) return { error: result.error };
+  if (!result.admin && !result.operator) {
+    return {
+      error: "This account doesn't have a listing yet. Ask us to set up your business, then sign in again.",
+    };
+  }
+
+  await setSessionCookie(result.profileId);
+  await setUserCookie(result.user);
+  redirect(homeFor(result));
 }
 
 // ---------------------------------------------------------------------------
@@ -190,4 +221,10 @@ export async function logoutAdmin() {
   await clearSessionCookie();
   await clearUserCookies();
   redirect("/admin/login");
+}
+
+export async function signOutOfDashboard() {
+  await clearSessionCookie();
+  await clearUserCookies();
+  redirect("/dashboard/login");
 }

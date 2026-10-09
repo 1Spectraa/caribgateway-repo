@@ -106,6 +106,7 @@ export async function uploadServiceImage(
   }
 
   revalidatePath(`/admin/businesses/${businessId}/services`);
+  revalidatePath("/dashboard", "layout");
   revalidatePublicSite();
   return { url: publicUrl };
 }
@@ -160,6 +161,7 @@ export async function deleteServiceImage(
   }
 
   revalidatePath(`/admin/businesses/${businessId}/services`);
+  revalidatePath("/dashboard", "layout");
   revalidatePublicSite();
   return { success: true };
 }

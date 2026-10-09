@@ -34,6 +34,12 @@ function LoginForm() {
           Sign up
         </Link>
       </p>
+      <p className="mb-6 -mt-3 text-sm text-gray-500">
+        Run a business here?{" "}
+        <Link href="/dashboard/login" className="text-brand-teal hover:underline font-medium">
+          Sign in to your operator dashboard
+        </Link>
+      </p>
 
       {registered && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 rounded-lg text-sm mb-4">

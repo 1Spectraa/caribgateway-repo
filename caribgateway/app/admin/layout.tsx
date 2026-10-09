@@ -10,9 +10,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    // Fixed overlay: covers the public Navbar and Footer from the root layout.
-    // Sign-in is checked in (protected)/layout.tsx, so the login page sits outside it.
-    <div className="fixed inset-0 z-[200] overflow-auto bg-gray-50">{children}</div>
-  );
+  // The admin panel has its own shell and no public navigation. Sign-in is checked in
+  // (protected)/layout.tsx, so the login page sits outside it.
+  return <div className="h-screen overflow-hidden bg-gray-50">{children}</div>;
 }

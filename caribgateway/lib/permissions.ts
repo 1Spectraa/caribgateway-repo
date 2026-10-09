@@ -140,19 +140,24 @@ export function isBusinessRight(value: string): value is BusinessRight {
   return Object.prototype.hasOwnProperty.call(BUSINESS_RIGHTS, value);
 }
 
-/** Keys that show the global dashboard. Anyone else with admin access sees only their own listings. */
-export const GLOBAL_DASHBOARD_PERMISSIONS: PermissionKey[] = [
-  "catalog.manage",
-  "listings.manage_all",
-  "site.content",
-  "accounts.manage",
-];
-
-/** Keys that open the Businesses and Accommodations lists. */
+/** Keys that open the operator dashboard: any permission to work on listings. */
 export const LISTING_PERMISSIONS: PermissionKey[] = [
   "listings.manage_all",
   "listings.manage_own",
   "listings.create",
+];
+
+/**
+ * Keys that open the admin panel. Operator-only keys (their own listings, new
+ * listings, accounts for their people) do not, so operators stay in the dashboard.
+ */
+export const ADMIN_PANEL_PERMISSIONS: PermissionKey[] = [
+  "catalog.manage",
+  "listings.manage_all",
+  "listings.publish",
+  "listings.delete",
+  "site.content",
+  "accounts.manage",
 ];
 
 export function hasPermission(granted: readonly string[], key: PermissionKey): boolean {
@@ -163,9 +168,19 @@ export function hasAnyPermission(granted: readonly string[], keys: readonly Perm
   return keys.some((key) => granted.includes(key));
 }
 
-/** Any permission at all lets an account into the admin area. */
+/** Any permission at all. Used by server actions, which check the specific key they need after this. */
 export function canUseAdmin(granted: readonly string[]): boolean {
   return hasAnyPermission(granted, PERMISSION_KEYS);
+}
+
+/** Whether this account may open the admin panel. Operators may not. */
+export function canUseAdminPanel(granted: readonly string[]): boolean {
+  return hasAnyPermission(granted, ADMIN_PANEL_PERMISSIONS);
+}
+
+/** Whether this account may open the operator dashboard: it works on at least one listing. */
+export function canUseDashboard(granted: readonly string[]): boolean {
+  return hasAnyPermission(granted, LISTING_PERMISSIONS);
 }
 
 type NavItem = {
@@ -174,18 +189,15 @@ type NavItem = {
   icon: string;
   /** Visible when the account has any of these. null means every admin account. */
   anyOf: readonly PermissionKey[] | null;
-  /** Hidden from accounts that have any of these, so each kind of account sees its own tabs. */
-  unless?: readonly PermissionKey[];
 };
 
+/** The admin panel's sections. Listing work lives in the operator dashboard, not here. */
 const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "▦", anyOf: null },
   { label: "Approvals", href: "/admin/approvals", icon: "✓", anyOf: ["listings.publish"] },
-  // Operators get one listings tab for both kinds. Administrators keep the separate lists.
-  { label: "My listings", href: "/admin/listings", icon: "🏢", anyOf: LISTING_PERMISSIONS, unless: ["listings.manage_all"] },
   { label: "Businesses", href: "/admin/businesses", icon: "🏢", anyOf: ["listings.manage_all"] },
   { label: "Accommodations", href: "/admin/accommodations", icon: "🛏", anyOf: ["listings.manage_all"] },
-  { label: "Statistics", href: "/admin/statistics", icon: "📈", anyOf: LISTING_PERMISSIONS },
+  { label: "Statistics", href: "/dashboard/statistics", icon: "📈", anyOf: ["listings.manage_all"] },
   { label: "Destinations", href: "/admin/destinations", icon: "🗺", anyOf: ["catalog.manage"] },
   { label: "Countries", href: "/admin/countries", icon: "🌍", anyOf: ["catalog.manage"] },
   { label: "Categories", href: "/admin/categories", icon: "🏷", anyOf: ["catalog.manage"] },
@@ -197,8 +209,6 @@ const ADMIN_NAV: NavItem[] = [
 /** The sidebar entries this account can open. */
 export function visibleAdminNav(granted: readonly string[]) {
   return ADMIN_NAV.filter(
-    (item) =>
-      (item.anyOf === null || hasAnyPermission(granted, item.anyOf)) &&
-      !(item.unless && hasAnyPermission(granted, item.unless)),
+    (item) => item.anyOf === null || hasAnyPermission(granted, item.anyOf),
   ).map(({ label, href, icon }) => ({ label, href, icon }));
 }

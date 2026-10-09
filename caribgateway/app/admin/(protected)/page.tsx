@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
-import { requireStaff } from "@/lib/staff";
-import { GLOBAL_DASHBOARD_PERMISSIONS, hasAnyPermission } from "@/lib/permissions";
-import OperatorDashboard from "@/components/admin/OperatorDashboard";
+import { requireAdminPanel } from "@/lib/staff";
 
 async function getStats() {
   const supabase = createServerClient();
@@ -79,11 +77,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default async function AdminDashboard() {
-  const staff = await requireStaff();
-  // Accounts without a company-wide permission see only the listings assigned to them.
-  if (!hasAnyPermission(staff.permissions, GLOBAL_DASHBOARD_PERMISSIONS)) {
-    return <OperatorDashboard staff={staff} />;
-  }
+  // Operators never reach this page: their listings live in the operator dashboard.
+  await requireAdminPanel();
 
   const {
     totalDest, totalBiz, publishedBiz, draftBiz, featuredBiz, verifiedBiz,

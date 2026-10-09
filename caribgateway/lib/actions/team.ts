@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
-import { authorize, authorizeBusinessRight, businessRights, can } from "@/lib/staff";
-import { isBusinessRight, type BusinessRight } from "@/lib/permissions";
+import { authorize, authorizeBusinessRight, businessRights, can, type Staff } from "@/lib/staff";
+import { canUseAdminPanel, isBusinessRight, type BusinessRight } from "@/lib/permissions";
 import { setBusinessOwner } from "@/lib/business-members";
 
 export type TeamState = { error: string } | null;
@@ -34,15 +34,19 @@ function mayManage(memberRights: string[], held: BusinessRight[], isAdmin: boole
   return isAdmin || memberRights.filter(isBusinessRight).every((right) => held.includes(right));
 }
 
-function teamPath(businessId: string): string {
-  return `/admin/businesses/${businessId}/team`;
+/** The people page for this account: the admin panel for admins, the operator dashboard otherwise. */
+function teamPath(businessId: string, staff: Staff): string {
+  return canUseAdminPanel(staff.permissions)
+    ? `/admin/businesses/${businessId}/team`
+    : `/dashboard/listings/${businessId}/people`;
 }
 
 function revalidateTeam(businessId: string) {
-  revalidatePath(teamPath(businessId));
+  revalidatePath(`/admin/businesses/${businessId}/team`);
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/accommodations");
   revalidatePath("/admin/accounts");
+  revalidatePath("/dashboard", "layout");
 }
 
 /**
@@ -156,7 +160,7 @@ export async function addBusinessMember(
   }
 
   revalidateTeam(businessId);
-  redirect(teamPath(businessId));
+  redirect(teamPath(businessId, staff));
 }
 
 /** Changes the rights one team member holds on a listing. Same ceiling as adding. */
@@ -204,7 +208,7 @@ export async function updateBusinessMember(
   if (error) return { error: error.message };
 
   revalidateTeam(businessId);
-  redirect(teamPath(businessId));
+  redirect(teamPath(businessId, staff));
 }
 
 /** Takes one person off a listing's team. They keep their account. */
@@ -245,7 +249,7 @@ export async function removeBusinessMember(
   if (error) return { error: error.message };
 
   revalidateTeam(businessId);
-  redirect(teamPath(businessId));
+  redirect(teamPath(businessId, auth.staff));
 }
 
 /** Sets who owns a listing, or clears the owner. Administrators only. */
@@ -274,5 +278,5 @@ export async function changeBusinessOwner(
   if (error) return { error };
 
   revalidateTeam(businessId);
-  redirect(teamPath(businessId));
+  redirect(teamPath(businessId, auth.staff));
 }

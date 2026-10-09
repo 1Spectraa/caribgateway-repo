@@ -18,12 +18,24 @@ export type ActionState = { error: string } | null;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Admin pages a business form may return to. Anything else goes to the businesses list. */
-const RETURN_PATHS = ["/admin/listings", "/admin/businesses", "/admin/accommodations"] as const;
+/** Admin lists, the operator's listings page, or one of the operator's listings. Anything else is ignored. */
+const ADMIN_PATHS = ["/admin/businesses", "/admin/accommodations"] as const;
+const DASHBOARD_LISTING_PATH = /^\/dashboard\/listings(\/[0-9a-f-]{36})?$/i;
 
-function returnPath(formData: FormData): string {
-  const requested = formData.get("return_to");
-  return RETURN_PATHS.find((path) => path === requested) ?? "/admin/businesses";
+function returnPath(formData: FormData, staff: Staff): string {
+  const requested = String(formData.get("return_to") ?? "");
+  if (ADMIN_PATHS.some((path) => path === requested) || DASHBOARD_LISTING_PATH.test(requested)) {
+    return requested;
+  }
+  return can(staff, "listings.manage_all") ? "/admin/businesses" : "/dashboard/listings";
+}
+
+/** Refreshes every page that shows listings: the admin lists and the operator dashboard. */
+function revalidateListings() {
+  revalidatePath("/admin/businesses");
+  revalidatePath("/admin/accommodations");
+  revalidatePath("/admin/approvals");
+  revalidatePath("/dashboard", "layout");
 }
 
 /** A yes, no, or not-set answer. Not set stays undefined, so it is never stored as no. */
@@ -244,11 +256,8 @@ export async function createBusiness(
   }
 
   revalidatePublicSite();
-  revalidatePath("/admin/businesses");
-  revalidatePath("/admin/accommodations");
-  revalidatePath("/admin/listings");
-  revalidatePath("/admin/approvals");
-  const path = returnPath(formData);
+  revalidateListings();
+  const path = returnPath(formData, staff);
   redirect(needsApproval ? `${path}?submitted=1` : path);
 }
 
@@ -291,11 +300,10 @@ export async function updateBusiness(
   }
 
   revalidatePublicSite();
-  revalidatePath("/admin/businesses");
-  revalidatePath("/admin/accommodations");
-  revalidatePath("/admin/listings");
+  revalidateListings();
   revalidatePath(`/admin/businesses/${id}/edit`);
-  redirect(returnPath(formData));
+  const path = returnPath(formData, staff);
+  redirect(path.startsWith("/dashboard") ? `${path}?saved=1` : path);
 }
 
 /** Storage paths of every photo a listing has, including its service photos. */
@@ -342,9 +350,6 @@ export async function deleteBusiness(
   }
 
   revalidatePublicSite();
-  revalidatePath("/admin/businesses");
-  revalidatePath("/admin/accommodations");
-  revalidatePath("/admin/listings");
-  revalidatePath("/admin/approvals");
-  redirect(can(staff, "listings.manage_all") ? "/admin/businesses" : "/admin/listings");
+  revalidateListings();
+  redirect(can(staff, "listings.manage_all") ? "/admin/businesses" : "/dashboard/listings");
 }

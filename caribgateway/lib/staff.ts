@@ -5,6 +5,8 @@ import { currentSubject } from "@/lib/session";
 import {
   BUSINESS_RIGHT_KEYS,
   canUseAdmin,
+  canUseAdminPanel,
+  canUseDashboard,
   hasAnyPermission,
   isBusinessRight,
   isPermissionKey,
@@ -87,16 +89,35 @@ export function can(staff: Staff, key: PermissionKey): boolean {
   return staff.permissions.includes(key);
 }
 
-/** For admin pages: sends signed-out or permissionless visitors to the admin sign-in page. */
+/**
+ * Any signed-in account that works on listings (the operator dashboard) or has
+ * admin access. Signed-out visitors go to the dashboard sign-in page.
+ */
 export async function requireStaff(): Promise<Staff> {
   const staff = await getStaff();
-  if (!staff || !canUseAdmin(staff.permissions)) redirect("/admin/login");
+  if (!staff || !(canUseDashboard(staff.permissions) || canUseAdminPanel(staff.permissions))) {
+    redirect("/dashboard/login");
+  }
   return staff;
 }
 
-/** For admin pages: needs at least one of the keys, otherwise goes back to the dashboard. */
+/** For the operator dashboard. The same check as requireStaff, named for where it is used. */
+export const requireDashboard = requireStaff;
+
+/**
+ * For the admin panel. Signed-out visitors go to the admin sign-in page. Operators,
+ * who have no admin permission, are sent to their dashboard instead.
+ */
+export async function requireAdminPanel(): Promise<Staff> {
+  const staff = await getStaff();
+  if (!staff) redirect("/admin/login");
+  if (!canUseAdminPanel(staff.permissions)) redirect("/dashboard");
+  return staff;
+}
+
+/** For admin pages: needs at least one of the keys, otherwise goes back to the admin dashboard. */
 export async function requirePermission(...keys: PermissionKey[]): Promise<Staff> {
-  const staff = await requireStaff();
+  const staff = await requireAdminPanel();
   if (!hasAnyPermission(staff.permissions, keys)) redirect("/admin");
   return staff;
 }
@@ -146,10 +167,17 @@ export async function businessRights(staff: Staff, businessId: string): Promise<
   return (membership?.permissions ?? []).filter(isBusinessRight);
 }
 
-/** For business pages: needs one specific right on this listing, otherwise goes back to the business list. */
+/** For a listing's pages: needs any right on this listing, otherwise goes back to My listings. */
+export async function requireListingAccess(businessId: string): Promise<Staff> {
+  const staff = await requireStaff();
+  if ((await businessRights(staff, businessId)).length === 0) redirect("/dashboard/listings");
+  return staff;
+}
+
+/** For a listing's pages: needs one specific right on this listing, otherwise goes back to My listings. */
 export async function requireBusinessRight(businessId: string, right: BusinessRight): Promise<Staff> {
   const staff = await requireStaff();
-  if (!(await businessRights(staff, businessId)).includes(right)) redirect("/admin/businesses");
+  if (!(await businessRights(staff, businessId)).includes(right)) redirect("/dashboard/listings");
   return staff;
 }
 

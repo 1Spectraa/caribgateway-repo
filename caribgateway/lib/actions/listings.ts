@@ -11,11 +11,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function refreshLists(businessId: string) {
   revalidatePath("/admin");
-  revalidatePath("/admin/listings");
   revalidatePath("/admin/approvals");
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/accommodations");
   revalidatePath(`/admin/businesses/${businessId}/edit`);
+  revalidatePath("/dashboard", "layout");
 }
 
 async function loadListing(businessId: string) {
