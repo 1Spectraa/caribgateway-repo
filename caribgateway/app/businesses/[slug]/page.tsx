@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { createPublicServerClient } from "@/lib/supabase";
 import BusinessCard from "@/components/businesses/BusinessCard";
+import ListingViewTracker from "@/components/listing/ListingViewTracker";
+import TrackedLink from "@/components/listing/TrackedLink";
 import type { SocialLinks, BusinessServiceRow } from "@/lib/database.types";
 
 type Props = {
@@ -94,6 +96,7 @@ export default async function BusinessDetailPage({ params }: Props) {
     { data: destination },
     { data: relatedBusinesses },
     { data: services },
+    { data: serviceImages },
   ] = await Promise.all([
     supabase
       .from("business_images")
@@ -121,9 +124,22 @@ export default async function BusinessDetailPage({ params }: Props) {
       .eq("business_id", business.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("business_service_images")
+      .select("id, service_id, url, sort_order")
+      .eq("business_id", business.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const imageList = images ?? [];
+
+  // Up to three photos per service, in the order the operator chose.
+  const photosByService = new Map<string, { id: string; url: string }[]>();
+  for (const photo of serviceImages ?? []) {
+    const list = photosByService.get(photo.service_id) ?? [];
+    list.push({ id: photo.id, url: photo.url });
+    photosByService.set(photo.service_id, list);
+  }
   const primaryImage = imageList.find((img) => img.is_primary) ?? imageList[0];
 
   // Fetch primary images for related businesses
@@ -146,6 +162,7 @@ export default async function BusinessDetailPage({ params }: Props) {
 
   return (
     <>
+      <ListingViewTracker businessId={business.id} />
       {/* Hero image */}
       <div className="relative h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
         {primaryImage ? (
@@ -328,6 +345,15 @@ export default async function BusinessDetailPage({ params }: Props) {
                               {svc.description && (
                                 <p className="text-gray-400 text-xs mt-0.5">{svc.description}</p>
                               )}
+                              {(photosByService.get(svc.id) ?? []).length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {(photosByService.get(svc.id) ?? []).map((photo) => (
+                                    <div key={photo.id} className="relative h-16 w-24 overflow-hidden rounded">
+                                      <Image src={photo.url} alt={svc.name} fill sizes="96px" className="object-cover" />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-brand-coral whitespace-nowrap">
                               <ServicePrice service={svc} />
@@ -351,7 +377,9 @@ export default async function BusinessDetailPage({ params }: Props) {
                 <h2 className="text-lg font-bold text-brand-navy mb-4">Contact</h2>
                 <div className="space-y-3">
                   {business.phone && (
-                    <a
+                    <TrackedLink
+                      businessId={business.id}
+                      kind="phone"
                       href={`tel:${business.phone}`}
                       className="flex items-center gap-3 text-sm text-gray-600 hover:text-brand-teal transition-colors"
                     >
@@ -359,10 +387,12 @@ export default async function BusinessDetailPage({ params }: Props) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                       {business.phone}
-                    </a>
+                    </TrackedLink>
                   )}
                   {business.email && (
-                    <a
+                    <TrackedLink
+                      businessId={business.id}
+                      kind="email"
                       href={`mailto:${business.email}`}
                       className="flex items-center gap-3 text-sm text-gray-600 hover:text-brand-teal transition-colors"
                     >
@@ -370,10 +400,12 @@ export default async function BusinessDetailPage({ params }: Props) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       {business.email}
-                    </a>
+                    </TrackedLink>
                   )}
                   {business.website && (
-                    <a
+                    <TrackedLink
+                      businessId={business.id}
+                      kind="website"
                       href={business.website}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -383,23 +415,23 @@ export default async function BusinessDetailPage({ params }: Props) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                       Visit website
-                    </a>
+                    </TrackedLink>
                   )}
 
                   {/* Social links */}
                   {socialLinks && Object.keys(socialLinks).length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                       {socialLinks.facebook && (
-                        <SocialLink href={socialLinks.facebook} label="Facebook" />
+                        <SocialLink businessId={business.id} href={socialLinks.facebook} label="Facebook" />
                       )}
                       {socialLinks.instagram && (
-                        <SocialLink href={socialLinks.instagram} label="Instagram" />
+                        <SocialLink businessId={business.id} href={socialLinks.instagram} label="Instagram" />
                       )}
                       {socialLinks.twitter && (
-                        <SocialLink href={socialLinks.twitter} label="Twitter" />
+                        <SocialLink businessId={business.id} href={socialLinks.twitter} label="Twitter" />
                       )}
                       {socialLinks.tripadvisor && (
-                        <SocialLink href={socialLinks.tripadvisor} label="TripAdvisor" />
+                        <SocialLink businessId={business.id} href={socialLinks.tripadvisor} label="TripAdvisor" />
                       )}
                     </div>
                   )}
@@ -407,7 +439,7 @@ export default async function BusinessDetailPage({ params }: Props) {
               </div>
 
               {/* Location card */}
-              {(business.address_line1 || business.city) && (
+              {(business.address_line1 || business.city || (business.latitude !== null && business.longitude !== null)) && (
                 <div className="bg-white rounded-2xl shadow-sm p-6">
                   <h2 className="text-lg font-bold text-brand-navy mb-4">Location</h2>
                   <div className="flex items-start gap-3 text-sm text-gray-600">
@@ -429,6 +461,18 @@ export default async function BusinessDetailPage({ params }: Props) {
                         >
                           {destination.name} →
                         </Link>
+                      )}
+                      {business.latitude !== null && business.longitude !== null && (
+                        <TrackedLink
+                          businessId={business.id}
+                          kind="directions"
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-teal hover:text-brand-teal-dark transition-colors font-medium mt-1 block"
+                        >
+                          Get directions →
+                        </TrackedLink>
                       )}
                     </div>
                   </div>
@@ -497,15 +541,17 @@ function ChevronRight() {
   );
 }
 
-function SocialLink({ href, label }: { href: string; label: string }) {
+function SocialLink({ businessId, href, label }: { businessId: string; href: string; label: string }) {
   return (
-    <a
+    <TrackedLink
+      businessId={businessId}
+      kind="social"
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="text-xs text-gray-500 hover:text-brand-teal bg-gray-100 hover:bg-brand-teal/10 px-3 py-1.5 rounded-full transition-colors font-medium"
     >
       {label}
-    </a>
+    </TrackedLink>
   );
 }

@@ -57,7 +57,13 @@ export default async function NewBusinessPage({ searchParams }: Props) {
           categories={categories ?? []}
           tags={tags ?? []}
           lockedType={fromAccommodations ? "hotel" : undefined}
-          returnTo={fromAccommodations ? "/admin/accommodations" : "/admin/businesses"}
+          returnTo={
+            !canManageAll
+              ? "/admin/listings"
+              : fromAccommodations
+                ? "/admin/accommodations"
+                : "/admin/businesses"
+          }
           canManageAll={canManageAll}
           canPublish={can(staff, "listings.publish")}
           owners={owners}

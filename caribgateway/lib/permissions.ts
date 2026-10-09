@@ -174,13 +174,19 @@ type NavItem = {
   icon: string;
   /** Visible when the account has any of these. null means every admin account. */
   anyOf: readonly PermissionKey[] | null;
+  /** Hidden from accounts that have any of these, so each kind of account sees its own tabs. */
+  unless?: readonly PermissionKey[];
 };
 
 const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "▦", anyOf: null },
+  { label: "Approvals", href: "/admin/approvals", icon: "✓", anyOf: ["listings.publish"] },
+  // Operators get one listings tab for both kinds. Administrators keep the separate lists.
+  { label: "My listings", href: "/admin/listings", icon: "🏢", anyOf: LISTING_PERMISSIONS, unless: ["listings.manage_all"] },
+  { label: "Businesses", href: "/admin/businesses", icon: "🏢", anyOf: ["listings.manage_all"] },
+  { label: "Accommodations", href: "/admin/accommodations", icon: "🛏", anyOf: ["listings.manage_all"] },
+  { label: "Statistics", href: "/admin/statistics", icon: "📈", anyOf: LISTING_PERMISSIONS },
   { label: "Destinations", href: "/admin/destinations", icon: "🗺", anyOf: ["catalog.manage"] },
-  { label: "Businesses", href: "/admin/businesses", icon: "🏢", anyOf: LISTING_PERMISSIONS },
-  { label: "Accommodations", href: "/admin/accommodations", icon: "🛏", anyOf: LISTING_PERMISSIONS },
   { label: "Countries", href: "/admin/countries", icon: "🌍", anyOf: ["catalog.manage"] },
   { label: "Categories", href: "/admin/categories", icon: "🏷", anyOf: ["catalog.manage"] },
   { label: "Tags", href: "/admin/tags", icon: "#", anyOf: ["catalog.manage"] },
@@ -190,7 +196,9 @@ const ADMIN_NAV: NavItem[] = [
 
 /** The sidebar entries this account can open. */
 export function visibleAdminNav(granted: readonly string[]) {
-  return ADMIN_NAV.filter((item) => item.anyOf === null || hasAnyPermission(granted, item.anyOf)).map(
-    ({ label, href, icon }) => ({ label, href, icon }),
-  );
+  return ADMIN_NAV.filter(
+    (item) =>
+      (item.anyOf === null || hasAnyPermission(granted, item.anyOf)) &&
+      !(item.unless && hasAnyPermission(granted, item.unless)),
+  ).map(({ label, href, icon }) => ({ label, href, icon }));
 }

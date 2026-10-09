@@ -18,6 +18,7 @@ async function getStats() {
     { data: topDestinations },
     { data: recent },
     { data: recentDest },
+    { count: pendingBiz },
   ] = await Promise.all([
     supabase.from("destinations").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("businesses").select("*", { count: "exact", head: true }),
@@ -60,11 +61,12 @@ async function getStats() {
       .select("id, name, is_active, is_featured")
       .order("sort_order", { ascending: true })
       .limit(5),
+    supabase.from("businesses").select("*", { count: "exact", head: true }).eq("status", "pending"),
   ]);
 
   return {
     totalDest, totalBiz, publishedBiz, draftBiz, featuredBiz, verifiedBiz,
-    byType, topDestinations, recent, recentDest,
+    byType, topDestinations, recent, recentDest, pendingBiz,
   };
 }
 
@@ -85,7 +87,7 @@ export default async function AdminDashboard() {
 
   const {
     totalDest, totalBiz, publishedBiz, draftBiz, featuredBiz, verifiedBiz,
-    byType, topDestinations, recent, recentDest,
+    byType, topDestinations, recent, recentDest, pendingBiz,
   } = await getStats();
 
   return (
@@ -93,7 +95,7 @@ export default async function AdminDashboard() {
       <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
 
       {/* ── Primary stat cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { label: "Destinations",  value: totalDest ?? 0,    href: "/admin/destinations", color: "text-brand-teal" },
           { label: "Total Businesses", value: totalBiz ?? 0,  href: "/admin/businesses",  color: "text-brand-navy" },
@@ -101,6 +103,7 @@ export default async function AdminDashboard() {
           { label: "Draft",         value: draftBiz ?? 0,     href: "/admin/businesses",  color: "text-yellow-600" },
           { label: "Featured",      value: featuredBiz ?? 0,  href: "/admin/businesses",  color: "text-brand-coral" },
           { label: "Verified",      value: verifiedBiz ?? 0,  href: "/admin/businesses",  color: "text-blue-600" },
+          { label: "Awaiting approval", value: pendingBiz ?? 0, href: "/admin/approvals", color: "text-yellow-600" },
         ].map((s) => (
           <Link
             key={s.label}

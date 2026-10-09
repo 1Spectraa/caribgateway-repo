@@ -73,7 +73,69 @@ const BUSINESS_TYPES = [
 ] as const;
 
 const PRICE_RANGES = ["budget", "moderate", "upscale", "luxury"] as const;
-const STATUSES = ["draft", "published", "archived"] as const;
+const STATUSES = ["draft", "pending", "published", "archived"] as const;
+
+const FIELD_CLASS =
+  "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+/** Pre-fills a Type details field from the saved listing. */
+function savedText(metadata: Record<string, unknown>, key: string): string {
+  const value = metadata[key];
+  if (value === undefined || value === null) return "";
+  return Array.isArray(value) ? value.join(", ") : String(value);
+}
+
+/** "yes", "no", or blank for a saved yes/no detail. */
+function savedYesNo(metadata: Record<string, unknown>, key: string): string {
+  const value = metadata[key];
+  if (value === true) return "yes";
+  if (value === false) return "no";
+  return "";
+}
+
+function DetailText({
+  name,
+  label,
+  defaultValue,
+  type = "text",
+  placeholder,
+  min,
+}: {
+  name: string;
+  label: string;
+  defaultValue: string;
+  type?: "text" | "number" | "time";
+  placeholder?: string;
+  min?: number;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        name={`meta_${name}`}
+        type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        min={min}
+        className={FIELD_CLASS}
+      />
+    </div>
+  );
+}
+
+/** Yes, no, or not set. Not set is never saved as no. */
+function DetailYesNo({ name, label, defaultValue }: { name: string; label: string; defaultValue: string }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <select name={`meta_${name}`} defaultValue={defaultValue} className={FIELD_CLASS}>
+        <option value="">Not set</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </div>
+  );
+}
 
 export default function BusinessForm({
   destinations,
@@ -129,6 +191,7 @@ export default function BusinessForm({
   const socialLinks = (business?.social_links ?? {}) as SocialLinks;
   const amenitiesStr = (business?.amenities ?? []).join(", ");
   const featuresStr = (business?.features ?? []).join(", ");
+  const meta = (business?.metadata ?? {}) as Record<string, unknown>;
 
   return (
     <form action={formAction} className="space-y-8 max-w-3xl">
@@ -137,6 +200,27 @@ export default function BusinessForm({
       {state?.error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
           {state.error}
+        </div>
+      )}
+      {business?.status === "pending" && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm">
+          Waiting for approval. Visitors can&apos;t see this listing until an administrator approves it.
+        </div>
+      )}
+      {business?.status === "draft" && business.review_note && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+          <p className="font-medium">An administrator asked for changes:</p>
+          <p className="mt-1 whitespace-pre-line">{business.review_note}</p>
+        </div>
+      )}
+      {business?.status === "draft" && !business.review_note && !canPublish && (
+        <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded text-sm">
+          This draft isn&apos;t visible to visitors yet. Send it for approval from My listings when it&apos;s ready.
+        </div>
+      )}
+      {!business && !canPublish && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm">
+          An administrator checks every new listing before it goes live. Send it for approval when it&apos;s ready.
         </div>
       )}
 
@@ -520,6 +604,79 @@ export default function BusinessForm({
 
       {/* ── Flags ──────────────────────────────────── */}
       {/* ── Tags ───────────────────────────────────── */}
+      {/* ── Type details: saved on the listing, and used by the statistics ── */}
+      {selectedType && (
+        <section>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Details for {BUSINESS_TYPES.find((t) => t.value === selectedType)?.label ?? "this type"}
+          </h3>
+          <p className="text-xs text-gray-500 mb-3">
+            Leave anything you don&apos;t know as Not set. Statistics show it as not set rather than guessing.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {selectedType === "hotel" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Star rating</label>
+                  <select name="meta_star_rating" defaultValue={savedText(meta, "star_rating")} className={FIELD_CLASS}>
+                    <option value="">Not set</option>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n} star{n > 1 ? "s" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <DetailText name="total_rooms" label="Rooms or units" type="number" min={1} defaultValue={savedText(meta, "total_rooms")} />
+                <DetailText name="check_in" label="Check-in time" type="time" defaultValue={savedText(meta, "check_in")} />
+                <DetailText name="check_out" label="Check-out time" type="time" defaultValue={savedText(meta, "check_out")} />
+                <DetailYesNo name="pool" label="Pool" defaultValue={savedYesNo(meta, "pool")} />
+                <DetailYesNo name="gym" label="Gym" defaultValue={savedYesNo(meta, "gym")} />
+                <DetailYesNo name="spa" label="Spa" defaultValue={savedYesNo(meta, "spa")} />
+                <DetailYesNo name="beach_access" label="Beach access" defaultValue={savedYesNo(meta, "beach_access")} />
+                <DetailYesNo name="all_inclusive" label="All-inclusive" defaultValue={savedYesNo(meta, "all_inclusive")} />
+              </>
+            )}
+            {selectedType === "restaurant" && (
+              <>
+                <DetailText name="cuisine_types" label="Cuisine types" placeholder="Caribbean, seafood, pizza" defaultValue={savedText(meta, "cuisine_types")} />
+                <DetailYesNo name="reservation_required" label="Reservations required" defaultValue={savedYesNo(meta, "reservation_required")} />
+                <DetailYesNo name="outdoor_seating" label="Outdoor seating" defaultValue={savedYesNo(meta, "outdoor_seating")} />
+                <DetailYesNo name="delivery_available" label="Delivery" defaultValue={savedYesNo(meta, "delivery_available")} />
+                <DetailYesNo name="halal" label="Halal options" defaultValue={savedYesNo(meta, "halal")} />
+                <DetailYesNo name="vegetarian_options" label="Vegetarian options" defaultValue={savedYesNo(meta, "vegetarian_options")} />
+                <DetailYesNo name="vegan_options" label="Vegan options" defaultValue={savedYesNo(meta, "vegan_options")} />
+              </>
+            )}
+            {selectedType === "attraction" && (
+              <>
+                <DetailText name="duration_minutes" label="Typical visit (minutes)" type="number" min={1} defaultValue={savedText(meta, "duration_minutes")} />
+                <DetailText name="age_min" label="Minimum age" type="number" min={0} defaultValue={savedText(meta, "age_min")} />
+                <DetailText name="age_max" label="Maximum age" type="number" min={0} defaultValue={savedText(meta, "age_max")} />
+                <DetailYesNo name="guided_only" label="Guided visits only" defaultValue={savedYesNo(meta, "guided_only")} />
+                <DetailYesNo name="outdoor" label="Outdoors" defaultValue={savedYesNo(meta, "outdoor")} />
+              </>
+            )}
+            {selectedType === "tour_operator" && (
+              <>
+                <DetailText name="tour_types" label="Tour types" placeholder="snorkelling, hiking, boat trips" defaultValue={savedText(meta, "tour_types")} />
+                <DetailText name="max_group_size" label="Largest group" type="number" min={1} defaultValue={savedText(meta, "max_group_size")} />
+                <DetailText name="languages_spoken" label="Languages spoken" placeholder="English, French" defaultValue={savedText(meta, "languages_spoken")} />
+                <DetailYesNo name="pickup_available" label="Hotel pickup" defaultValue={savedYesNo(meta, "pickup_available")} />
+              </>
+            )}
+            {selectedType === "transportation" && (
+              <>
+                <DetailText name="vehicle_types" label="Vehicle types" placeholder="taxi, minibus, car hire" defaultValue={savedText(meta, "vehicle_types")} />
+                <DetailText name="service_area" label="Service area" defaultValue={savedText(meta, "service_area")} />
+                <DetailYesNo name="airport_transfers" label="Airport transfers" defaultValue={savedYesNo(meta, "airport_transfers")} />
+                <DetailYesNo name="driver_included" label="Driver included" defaultValue={savedYesNo(meta, "driver_included")} />
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       <section hidden={!canManageAll}>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           Tags
@@ -600,7 +757,9 @@ export default function BusinessForm({
             ? "Saving…"
             : business
               ? "Update Business"
-              : "Create Business"}
+              : canPublish
+                ? "Create Business"
+                : "Send for approval"}
         </button>
         <a
           href={returnTo}

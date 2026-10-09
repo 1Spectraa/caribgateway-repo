@@ -13,10 +13,16 @@ export default async function BusinessServicesPage({ params }: Props) {
   await requireBusinessRight(id, "services");
   const supabase = createServerClient();
 
-  const [{ data: business }, { data: services }] = await Promise.all([
+  const [{ data: business }, { data: services }, { data: photos }] = await Promise.all([
     supabase.from("businesses").select("id, name").eq("id", id).single(),
     supabase
       .from("business_services")
+      .select("*")
+      .eq("business_id", id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("business_service_images")
       .select("*")
       .eq("business_id", id)
       .order("sort_order", { ascending: true })
@@ -41,7 +47,7 @@ export default async function BusinessServicesPage({ params }: Props) {
       </div>
 
       <div className="bg-white border border-gray-200 rounded p-6">
-        <ServicesManager businessId={id} services={services ?? []} />
+        <ServicesManager businessId={id} services={services ?? []} photos={photos ?? []} />
       </div>
     </div>
   );

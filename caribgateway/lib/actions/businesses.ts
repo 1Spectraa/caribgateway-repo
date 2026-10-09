@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import { revalidatePublicSite } from "@/lib/revalidate";
 import { toSlug } from "@/lib/slug";
-import { authorize, authorizeBusinessRight, businessRights, can, type Staff } from "@/lib/staff";
+import { authorize, authorizeBusinessRight, can, isListingOwner, type Staff } from "@/lib/staff";
 import { setBusinessOwner } from "@/lib/business-members";
 import type {
+  BusinessMetadata,
   BusinessType,
   PriceRange,
   PublishStatus,
@@ -15,12 +16,97 @@ import type {
 
 export type ActionState = { error: string } | null;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Admin pages a business form may return to. Anything else goes to the businesses list. */
-const RETURN_PATHS = ["/admin/businesses", "/admin/accommodations"] as const;
+const RETURN_PATHS = ["/admin/listings", "/admin/businesses", "/admin/accommodations"] as const;
 
 function returnPath(formData: FormData): string {
   const requested = formData.get("return_to");
   return RETURN_PATHS.find((path) => path === requested) ?? "/admin/businesses";
+}
+
+/** A yes, no, or not-set answer. Not set stays undefined, so it is never stored as no. */
+function readYesNo(formData: FormData, name: string): boolean | undefined {
+  const value = formData.get(`meta_${name}`);
+  if (value === "yes") return true;
+  if (value === "no") return false;
+  return undefined;
+}
+
+/** A whole number inside the range, or undefined when blank or out of range. */
+function readWhole(formData: FormData, name: string, min: number, max: number): number | undefined {
+  const raw = ((formData.get(`meta_${name}`) as string | null) ?? "").trim();
+  if (!raw) return undefined;
+  const value = Number(raw);
+  return Number.isInteger(value) && value >= min && value <= max ? value : undefined;
+}
+
+/** A clock time such as 14:00, or undefined when blank or not a time. */
+function readTime(formData: FormData, name: string): string | undefined {
+  const raw = ((formData.get(`meta_${name}`) as string | null) ?? "").trim();
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(raw) ? raw : undefined;
+}
+
+/** Comma-separated words from a text field. */
+function readList(formData: FormData, name: string): string[] {
+  return ((formData.get(`meta_${name}`) as string | null) ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Free text, or undefined when blank. */
+function readText(formData: FormData, name: string): string | undefined {
+  return ((formData.get(`meta_${name}`) as string | null) ?? "").trim() || undefined;
+}
+
+/**
+ * The type-specific details for this business type, saved as businesses.metadata.
+ * Only the fields shown for the type are kept, so changing the type drops the old ones.
+ * Blank answers are left out, so the statistics say "not set yet" rather than guess.
+ */
+function parseMetadata(formData: FormData, type: BusinessType | null): BusinessMetadata {
+  const details: Record<string, unknown> = {};
+  const put = (key: string, value: unknown) => {
+    if (value === undefined || (Array.isArray(value) && value.length === 0)) return;
+    details[key] = value;
+  };
+  const flags = (...keys: string[]) => keys.forEach((key) => put(key, readYesNo(formData, key)));
+
+  switch (type) {
+    case "hotel":
+      put("star_rating", readWhole(formData, "star_rating", 1, 5));
+      put("check_in", readTime(formData, "check_in"));
+      put("check_out", readTime(formData, "check_out"));
+      put("total_rooms", readWhole(formData, "total_rooms", 1, 10000));
+      flags("pool", "gym", "spa", "beach_access", "all_inclusive");
+      break;
+    case "restaurant":
+      put("cuisine_types", readList(formData, "cuisine_types"));
+      flags("reservation_required", "outdoor_seating", "delivery_available", "halal", "vegetarian_options", "vegan_options");
+      break;
+    case "attraction":
+      put("duration_minutes", readWhole(formData, "duration_minutes", 1, 10080));
+      put("age_min", readWhole(formData, "age_min", 0, 120));
+      put("age_max", readWhole(formData, "age_max", 0, 120));
+      flags("guided_only", "outdoor");
+      break;
+    case "tour_operator":
+      put("tour_types", readList(formData, "tour_types"));
+      put("max_group_size", readWhole(formData, "max_group_size", 1, 1000));
+      put("languages_spoken", readList(formData, "languages_spoken"));
+      flags("pickup_available");
+      break;
+    case "transportation":
+      put("vehicle_types", readList(formData, "vehicle_types"));
+      put("service_area", readText(formData, "service_area"));
+      flags("airport_transfers", "driver_included");
+      break;
+    default:
+      break;
+  }
+  return details as BusinessMetadata;
 }
 
 function parseBusinessForm(formData: FormData) {
@@ -74,6 +160,7 @@ function parseBusinessForm(formData: FormData) {
     is_verified: formData.get("is_verified") === "on",
     is_featured: formData.get("is_featured") === "on",
     is_active: formData.get("is_active") === "on",
+    metadata: parseMetadata(formData, formData.get("business_type") as BusinessType | null),
   };
 }
 
@@ -132,10 +219,16 @@ export async function createBusiness(
   // Only 'Edit any listing' can choose an owner. Otherwise the creator owns the new listing.
   const owner_id = can(staff, "listings.manage_all") ? readOwner(formData) : staff.id;
 
+  // Only administrators publish directly. Anything an operator starts waits for approval.
+  const needsApproval = !can(staff, "listings.publish");
+  const approval = needsApproval
+    ? { status: "pending" as const, submitted_at: new Date().toISOString(), review_note: null }
+    : {};
+
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("businesses")
-    .insert({ ...allowedFields(fields, staff), owner_id })
+    .insert({ ...allowedFields(fields, staff), ...approval, owner_id })
     .select("id")
     .single();
 
@@ -153,7 +246,10 @@ export async function createBusiness(
   revalidatePublicSite();
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/accommodations");
-  redirect(returnPath(formData));
+  revalidatePath("/admin/listings");
+  revalidatePath("/admin/approvals");
+  const path = returnPath(formData);
+  redirect(needsApproval ? `${path}?submitted=1` : path);
 }
 
 export async function updateBusiness(
@@ -197,10 +293,24 @@ export async function updateBusiness(
   revalidatePublicSite();
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/accommodations");
+  revalidatePath("/admin/listings");
   revalidatePath(`/admin/businesses/${id}/edit`);
   redirect(returnPath(formData));
 }
 
+/** Storage paths of every photo a listing has, including its service photos. */
+async function listingPhotoPaths(businessId: string): Promise<string[]> {
+  const supabase = createServerClient();
+  const [{ data: photos }, { data: servicePhotos }] = await Promise.all([
+    supabase.from("business_images").select("storage_path").eq("business_id", businessId),
+    supabase.from("business_service_images").select("storage_path").eq("business_id", businessId),
+  ]);
+  return [...(photos ?? []), ...(servicePhotos ?? [])]
+    .map((photo) => photo.storage_path)
+    .filter((path): path is string => Boolean(path));
+}
+
+/** The listing's owner can delete it, and so can an administrator with 'Delete listings'. */
 export async function deleteBusiness(
   id: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -208,22 +318,33 @@ export async function deleteBusiness(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
-  const auth = await authorize("listings.delete");
+  if (!UUID.test(id)) return { error: "That listing doesn't exist." };
+
+  const auth = await authorize("listings.manage_all", "listings.manage_own", "listings.create");
   if ("error" in auth) return auth;
-  if (!(await businessRights(auth.staff, id)).includes("details")) {
-    return { error: "You can only delete listings you can edit." };
+  const { staff } = auth;
+
+  const owns = await isListingOwner(staff, id);
+  if (!owns && !can(staff, "listings.delete")) {
+    return { error: "Only the owner or an administrator can delete this listing." };
   }
 
-  const supabase = createServerClient();
-  const { error } = await supabase
-    .from("businesses")
-    .delete()
-    .eq("id", id);
+  // Read the photo paths first: the rows are gone once the listing is deleted.
+  const paths = await listingPhotoPaths(id);
 
+  const supabase = createServerClient();
+  const { error } = await supabase.from("businesses").delete().eq("id", id);
   if (error) return { error: error.message };
+
+  // Best effort: a failed storage delete leaves files behind but never blocks the delete.
+  if (paths.length > 0) {
+    await supabase.storage.from("business-images").remove(paths);
+  }
 
   revalidatePublicSite();
   revalidatePath("/admin/businesses");
   revalidatePath("/admin/accommodations");
-  redirect("/admin/businesses");
+  revalidatePath("/admin/listings");
+  revalidatePath("/admin/approvals");
+  redirect(can(staff, "listings.manage_all") ? "/admin/businesses" : "/admin/listings");
 }

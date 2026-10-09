@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { Fragment, useActionState, useRef } from "react";
 import { createService, deleteService, type ServiceActionState } from "@/lib/actions/services";
-import type { BusinessServiceRow } from "@/lib/database.types";
+import type { BusinessServiceImageRow, BusinessServiceRow } from "@/lib/database.types";
+import ServicePhotos from "@/components/admin/ServicePhotos";
 
 const PRICE_UNITS = [
   { value: "fixed",      label: "Fixed price" },
@@ -15,6 +16,7 @@ const PRICE_UNITS = [
 interface Props {
   businessId: string;
   services: BusinessServiceRow[];
+  photos: BusinessServiceImageRow[];
 }
 
 function formatPrice(service: BusinessServiceRow): string {
@@ -39,7 +41,7 @@ function formatPrice(service: BusinessServiceRow): string {
     : `${formatted}${unitLabel[service.price_unit] ?? ""}`;
 }
 
-export default function ServicesManager({ businessId, services }: Props) {
+export default function ServicesManager({ businessId, services, photos }: Props) {
   const createAction = createService.bind(null, businessId);
   const [state, formAction, pending] = useActionState<ServiceActionState, FormData>(
     createAction,
@@ -69,28 +71,40 @@ export default function ServicesManager({ businessId, services }: Props) {
             </thead>
             <tbody>
               {services.map((svc) => (
-                <tr key={svc.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-2.5 pr-4">
-                    <p className="font-medium text-gray-900">{svc.name}</p>
-                    {svc.description && (
-                      <p className="text-gray-400 text-xs mt-0.5">{svc.description}</p>
-                    )}
-                  </td>
-                  <td className="py-2.5 pr-4 text-gray-700 font-medium whitespace-nowrap">
-                    {formatPrice(svc)}
-                  </td>
-                  <td className="py-2.5 pr-4 text-gray-500 whitespace-nowrap">
-                    {svc.duration_minutes ? `${svc.duration_minutes} min` : "—"}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <button
-                      onClick={() => handleDelete(svc.id)}
-                      className="text-red-500 hover:text-red-700 text-xs"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
+                <Fragment key={svc.id}>
+                  <tr>
+                    <td className="py-2.5 pr-4">
+                      <p className="font-medium text-gray-900">{svc.name}</p>
+                      {svc.description && (
+                        <p className="text-gray-400 text-xs mt-0.5">{svc.description}</p>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-gray-700 font-medium whitespace-nowrap">
+                      {formatPrice(svc)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-gray-500 whitespace-nowrap">
+                      {svc.duration_minutes ? `${svc.duration_minutes} min` : "—"}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <button
+                        onClick={() => handleDelete(svc.id)}
+                        className="text-red-500 hover:text-red-700 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-50 last:border-0">
+                    <td colSpan={4} className="pb-3">
+                      <ServicePhotos
+                        businessId={businessId}
+                        serviceId={svc.id}
+                        serviceName={svc.name}
+                        photos={photos.filter((photo) => photo.service_id === svc.id)}
+                      />
+                    </td>
+                  </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>

@@ -31,7 +31,7 @@ export type DestinationType =
 
 export type PriceRange = "budget" | "moderate" | "upscale" | "luxury";
 
-export type PublishStatus = "draft" | "published" | "archived";
+export type PublishStatus = "draft" | "pending" | "published" | "archived";
 
 // ---------------------------------------------------------------------------
 // JSONB shapes (strongly typed for safer data access)
@@ -203,6 +203,10 @@ export type BusinessRow = {
   is_featured: boolean;
   is_active: boolean;
   status: PublishStatus;
+  submitted_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  review_note: string | null;
   avg_rating: number | null;
   review_count: number;
   metadata: BusinessMetadata;
@@ -281,6 +285,35 @@ export type BusinessMemberInsert = {
   business_id: string;
   profile_id: string;
   permissions?: string[];
+};
+
+export type BusinessServiceImageRow = {
+  id: string;
+  service_id: string;
+  business_id: string;
+  url: string;
+  storage_path: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type BusinessServiceImageInsert = {
+  service_id: string;
+  business_id: string;
+  url: string;
+  storage_path?: string | null;
+  sort_order?: number;
+};
+
+/** What a visitor did on a listing. Views and contact clicks. */
+export type ListingEventKind = "view" | "phone" | "email" | "website" | "directions" | "social";
+
+export type ListingEventRow = {
+  business_id: string;
+  /** UTC day, as YYYY-MM-DD. */
+  day: string;
+  kind: ListingEventKind;
+  count: number;
 };
 
 export type BusinessServiceRow = {
@@ -381,6 +414,10 @@ export type BusinessInsert = {
   is_featured?: boolean;
   is_active?: boolean;
   status?: PublishStatus;
+  submitted_at?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  review_note?: string | null;
   avg_rating?: number | null;
   review_count?: number;
   metadata?: BusinessMetadata;
@@ -477,6 +514,18 @@ export interface Database {
         Update: Partial<BusinessMemberInsert>;
         Relationships: [];
       };
+      business_service_images: {
+        Row: BusinessServiceImageRow;
+        Insert: BusinessServiceImageInsert;
+        Update: Partial<BusinessServiceImageInsert>;
+        Relationships: [];
+      };
+      listing_events: {
+        Row: ListingEventRow;
+        Insert: ListingEventRow;
+        Update: Partial<ListingEventRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Enums: {
@@ -490,6 +539,10 @@ export interface Database {
       slugify: {
         Args: { value: string };
         Returns: string;
+      };
+      record_listing_event: {
+        Args: { p_business: string; p_kind: string };
+        Returns: undefined;
       };
     };
   };

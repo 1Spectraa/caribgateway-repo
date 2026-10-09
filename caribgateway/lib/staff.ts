@@ -186,3 +186,14 @@ export async function listingScope(staff: Staff): Promise<string | null> {
   if (ids.length > 0) filters.push(`id.in.(${ids.join(",")})`);
   return filters.join(",");
 }
+
+/** Whether this person owns the listing. Team members do not count. Owners can delete and switch it on or off. */
+export async function isListingOwner(staff: Staff, businessId: string): Promise<boolean> {
+  if (staff.isRoot) return false;
+  const { data } = await createServerClient()
+    .from("businesses")
+    .select("owner_id")
+    .eq("id", businessId)
+    .maybeSingle();
+  return data?.owner_id === staff.id;
+}

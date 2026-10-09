@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { authorizeBusinessRight } from "@/lib/staff";
+import { revalidatePublicSite } from "@/lib/revalidate";
 
 export type ServiceActionState = { error: string } | null;
+
+// Same bucket as the listing photos in images.ts and the service photos in service-images.ts.
+const BUCKET = "business-images";
 
 export async function createService(
   businessId: string,
@@ -54,6 +58,25 @@ export async function deleteService(serviceId: string, businessId: string) {
   const auth = await authorizeBusinessRight(service.business_id, "services");
   if ("error" in auth) return auth;
 
-  await supabase.from("business_services").delete().eq("id", serviceId);
+  // The photo rows go with the service (ON DELETE CASCADE), but their files are in storage.
+  // Remove the files first, so a failed removal leaves the service and its photos as they were.
+  const { data: photos, error: photosError } = await supabase
+    .from("business_service_images")
+    .select("storage_path")
+    .eq("service_id", serviceId);
+  if (photosError) return { error: photosError.message };
+
+  const paths = (photos ?? [])
+    .map((photo) => photo.storage_path)
+    .filter((path): path is string => Boolean(path));
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove(paths);
+    if (storageError) return { error: storageError.message };
+  }
+
+  const { error } = await supabase.from("business_services").delete().eq("id", serviceId);
+  if (error) return { error: error.message };
+
   revalidatePath(`/admin/businesses/${businessId}/services`);
+  revalidatePublicSite();
 }
