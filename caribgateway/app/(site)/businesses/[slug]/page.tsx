@@ -48,6 +48,14 @@ const priceSymbols: Record<string, string> = {
   luxury:   "$$$$",
 };
 
+/** The word behind each price symbol, shown beside it so the symbol is never on its own. */
+const priceLevels: Record<string, string> = {
+  budget:   "Budget",
+  moderate: "Moderate",
+  upscale:  "Upscale",
+  luxury:   "Luxury",
+};
+
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const half = rating % 1 >= 0.5;
@@ -261,9 +269,15 @@ export default async function BusinessDetailPage({ params }: Props) {
               </div>
             )}
             {business.price_range && (
-              <span className="text-brand-coral font-bold text-lg">
-                {priceSymbols[business.price_range] ?? business.price_range}
-              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Price range</span>
+                <span className="text-brand-coral font-bold text-lg">
+                  {priceSymbols[business.price_range] ?? business.price_range}
+                </span>
+                {priceLevels[business.price_range] && (
+                  <span className="text-sm font-medium text-gray-700">{priceLevels[business.price_range]}</span>
+                )}
+              </div>
             )}
           </div>
 
