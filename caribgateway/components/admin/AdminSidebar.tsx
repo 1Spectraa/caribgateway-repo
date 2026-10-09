@@ -10,7 +10,7 @@ import type { AdminNavGroup, AdminNavIcon } from "@/lib/permissions";
 type NavItem = { label: string; href: string; icon: AdminNavIcon; group: AdminNavGroup };
 
 /** The sections, in the order they appear in the sidebar. */
-const GROUPS: AdminNavGroup[] = ["Overview", "Listings", "Catalogue", "Site and access"];
+const GROUPS: AdminNavGroup[] = ["Overview", "Listings", "Content", "Catalogue", "Site and access"];
 
 /**
  * The admin console's sidebar: an ink panel with the sections grouped under small labels. The
@@ -19,9 +19,12 @@ const GROUPS: AdminNavGroup[] = ["Overview", "Listings", "Catalogue", "Site and 
 export default function AdminSidebar({
   items,
   staffName,
+  showOperatorLink,
 }: {
   items: NavItem[];
   staffName: string;
+  /** Accounts that also work on listings get a way over to the operator dashboard. */
+  showOperatorLink: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -124,6 +127,16 @@ export default function AdminSidebar({
             <Icon name="eye" className="h-4 w-4 text-gray-300/70" />
             View site
           </Link>
+          {showOperatorLink && (
+            <Link
+              href="/dashboard"
+              onClick={close}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/[0.05] hover:text-white"
+            >
+              <Icon name="building" className="h-4 w-4 text-gray-300/70" />
+              Operator dashboard
+            </Link>
+          )}
           <form action={logoutAdmin}>
             <button
               type="submit"

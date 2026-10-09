@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import DeleteBusinessButton from "@/components/admin/DeleteBusinessButton";
 import { businessRights, can, listingScope, requirePermission } from "@/lib/staff";
+import ListingStateTag from "@/components/admin/ListingStateTag";
 import { LISTING_PERMISSIONS } from "@/lib/permissions";
 
 export default async function BusinessesPage() {
@@ -13,7 +14,7 @@ export default async function BusinessesPage() {
   let businessQuery = supabase
     .from("businesses")
     .select(
-      "id, name, slug, business_type, status, is_featured, is_verified, destination_id, created_at",
+      "id, name, slug, business_type, status, is_active, is_featured, is_verified, destination_id, created_at",
     )
     .order("created_at", { ascending: false });
   // Operators see only the businesses they own or are on the team for.
@@ -116,17 +117,7 @@ export default async function BusinessesPage() {
                     {b.business_type === "hotel" ? "Accommodation" : b.business_type.replace("_", " ")}
                   </td>
                   <td className="px-4 py-2.5">
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        b.status === "published"
-                          ? "bg-green-100 text-green-700"
-                          : b.status === "archived"
-                            ? "bg-gray-100 text-gray-500"
-                            : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {b.status}
-                    </span>
+                    <ListingStateTag status={b.status} isActive={b.is_active} />
                   </td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center justify-end gap-3">

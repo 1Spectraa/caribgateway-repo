@@ -59,7 +59,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     { label: "Destinations", href: "/destinations" },
     { label: "Experiences", href: "/businesses" },
     { label: "Accommodations", href: "/accommodations" },
-    { label: "About", href: "#" },
+    { label: "Blog", href: "/blog" },
   ],
   footer: {
     tagline:
@@ -81,9 +81,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { label: "Luxury Stays", href: "/accommodations?type=all-inclusive-resorts" },
     ],
     company: [
-      { label: "About Us", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About Us", href: "/about" },
+      { label: "Blog", href: "/blog" },
+      { label: "Contact", href: "/contact" },
     ],
     social: [
       { label: "X (Twitter)", href: "https://x.com/CaribGateway" },
@@ -94,9 +94,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61590630655752" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "#" },
-      { label: "Terms of Service", href: "#" },
-      { label: "Cookie Policy", href: "#" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Cookie Policy", href: "/cookies" },
     ],
     copyright: "© 2026 CaribGateway. All rights reserved.",
   },

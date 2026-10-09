@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import DeleteBusinessButton from "@/components/admin/DeleteBusinessButton";
 import { businessRights, can, listingScope, requirePermission } from "@/lib/staff";
+import ListingStateTag from "@/components/admin/ListingStateTag";
 import { LISTING_PERMISSIONS } from "@/lib/permissions";
 
 export default async function AccommodationsAdminPage() {
@@ -12,7 +13,7 @@ export default async function AccommodationsAdminPage() {
 
   let accommodationQuery = supabase
     .from("businesses")
-    .select("id, name, status, is_featured, is_verified, destination_id, category_id")
+    .select("id, name, status, is_active, is_featured, is_verified, destination_id, category_id")
     .eq("business_type", "hotel")
     .order("name");
   // Operators see only the accommodations they own or are on the team for.
@@ -132,17 +133,7 @@ export default async function AccommodationsAdminPage() {
                       {destination ? `${country?.flag_emoji ?? ""} ${destination.name}` : "—"}
                     </td>
                     <td className="px-4 py-2.5">
-                      <span
-                        className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                          a.status === "published"
-                            ? "bg-green-100 text-green-700"
-                            : a.status === "archived"
-                              ? "bg-gray-100 text-gray-500"
-                              : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {a.status}
-                      </span>
+                      <ListingStateTag status={a.status} isActive={a.is_active} />
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center justify-end gap-3">

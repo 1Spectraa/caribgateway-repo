@@ -350,6 +350,29 @@ export type SiteSettingRow = {
   updated_at: string;
 };
 
+/** A blog post. Visitors read published posts; drafts are only seen in the admin panel. */
+export type BlogPostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  status: "draft" | "published";
+  published_at: string | null;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** A message sent from the Contact page. Only the server reads or writes it. */
+export type ContactMessageRow = {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  created_at: string;
+};
+
 // ---------------------------------------------------------------------------
 // Insert / Update types
 // ---------------------------------------------------------------------------
@@ -506,6 +529,34 @@ export interface Database {
         Row: SiteSettingRow;
         Insert: { key: string; value: unknown; updated_at?: string };
         Update: Partial<{ key: string; value: unknown; updated_at: string }>;
+        Relationships: [];
+      };
+      blog_posts: {
+        Row: BlogPostRow;
+        Insert: {
+          slug: string;
+          title: string;
+          excerpt?: string;
+          body?: string;
+          status?: "draft" | "published";
+          published_at?: string | null;
+          author_id?: string | null;
+        };
+        Update: Partial<{
+          slug: string;
+          title: string;
+          excerpt: string;
+          body: string;
+          status: "draft" | "published";
+          published_at: string | null;
+          author_id: string | null;
+        }>;
+        Relationships: [];
+      };
+      contact_messages: {
+        Row: ContactMessageRow;
+        Insert: { name: string; email: string; message: string };
+        Update: Partial<{ name: string; email: string; message: string }>;
         Relationships: [];
       };
       business_members: {

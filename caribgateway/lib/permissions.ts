@@ -54,6 +54,11 @@ export const PERMISSIONS = {
       "Create login accounts for people they add to a listing. Those accounts get access to that listing only.",
     group: "Business operator",
   },
+  "blog.manage": {
+    label: "Write blog posts",
+    description: "Create, edit, publish, and delete blog posts.",
+    group: "Content",
+  },
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
@@ -99,6 +104,11 @@ export const PRESETS = {
       "listings.publish",
       "site.content",
     ] as PermissionKey[],
+  },
+  blogger: {
+    label: "Blogger",
+    description: "Writes and publishes blog posts. No listings, catalogue, or accounts.",
+    permissions: ["blog.manage"] as PermissionKey[],
   },
   full: {
     label: "Full administrator",
@@ -158,6 +168,7 @@ export const ADMIN_PANEL_PERMISSIONS: PermissionKey[] = [
   "listings.delete",
   "site.content",
   "accounts.manage",
+  "blog.manage",
 ];
 
 export function hasPermission(granted: readonly string[], key: PermissionKey): boolean {
@@ -184,7 +195,7 @@ export function canUseDashboard(granted: readonly string[]): boolean {
 }
 
 /** The sidebar's sections, in order. */
-export type AdminNavGroup = "Overview" | "Listings" | "Catalogue" | "Site and access";
+export type AdminNavGroup = "Overview" | "Listings" | "Content" | "Catalogue" | "Site and access";
 
 /** The icon each section draws in the admin sidebar. */
 export type AdminNavIcon =
@@ -198,7 +209,9 @@ export type AdminNavIcon =
   | "list"
   | "tag"
   | "pencil"
-  | "users";
+  | "users"
+  | "book"
+  | "mail";
 
 type NavItem = {
   label: string;
@@ -216,12 +229,14 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Businesses", href: "/admin/businesses", icon: "building", group: "Listings", anyOf: ["listings.manage_all"] },
   { label: "Accommodations", href: "/admin/accommodations", icon: "bed", group: "Listings", anyOf: ["listings.manage_all"] },
   { label: "Statistics", href: "/admin/statistics", icon: "chart", group: "Listings", anyOf: LISTING_PERMISSIONS },
+  { label: "Blog", href: "/admin/blog", icon: "book", group: "Content", anyOf: ["blog.manage"] },
   { label: "Destinations", href: "/admin/destinations", icon: "map", group: "Catalogue", anyOf: ["catalog.manage"] },
   { label: "Countries", href: "/admin/countries", icon: "globe", group: "Catalogue", anyOf: ["catalog.manage"] },
   { label: "Categories", href: "/admin/categories", icon: "list", group: "Catalogue", anyOf: ["catalog.manage"] },
   { label: "Tags", href: "/admin/tags", icon: "tag", group: "Catalogue", anyOf: ["catalog.manage"] },
   { label: "Site Content", href: "/admin/site", icon: "pencil", group: "Site and access", anyOf: ["site.content"] },
   { label: "Accounts", href: "/admin/accounts", icon: "users", group: "Site and access", anyOf: ["accounts.manage"] },
+  { label: "Messages", href: "/admin/messages", icon: "mail", group: "Site and access", anyOf: ["site.content"] },
 ];
 
 /** The sidebar entries this account can open. */

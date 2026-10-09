@@ -1,6 +1,6 @@
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { requireAdminPanel } from "@/lib/staff";
-import { visibleAdminNav } from "@/lib/permissions";
+import { canUseDashboard, visibleAdminNav } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,11 @@ export default async function ProtectedAdminLayout({
 
   return (
     <div className="flex h-full overflow-hidden">
-      <AdminSidebar items={nav} staffName={staff.name} />
+      <AdminSidebar
+        items={nav}
+        staffName={staff.name}
+        showOperatorLink={canUseDashboard(staff.permissions)}
+      />
 
       {/* The page scrolls here. The top padding clears the phone's menu button. */}
       <main className="min-w-0 flex-1 overflow-y-auto px-5 pb-16 pt-16 sm:px-8 md:pt-10 lg:px-12">
