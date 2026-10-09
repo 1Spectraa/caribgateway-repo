@@ -186,7 +186,7 @@ export default async function StatisticsReport({
             <select
               name="listing"
               defaultValue={l.id}
-              className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-normal text-slate-900 shadow-sm focus:border-brand-teal focus:outline-none focus:ring-4 focus:ring-brand-teal/15"
+              className="rounded-[var(--radius-chip)] border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-normal text-slate-900 shadow-sm focus:border-brand-teal focus:outline-none focus:ring-4 focus:ring-brand-teal/15"
             >
               {choices.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -207,7 +207,7 @@ export default async function StatisticsReport({
               href={`${paths.page}?listing=${l.id}&range=${option}`}
               aria-current={option === days ? "page" : undefined}
               className={cx(
-                "rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-brand-teal",
+                "rounded-[var(--radius-control)] px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-brand-teal",
                 option === days
                   ? "bg-brand-navy text-white shadow-sm"
                   : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:text-brand-navy",

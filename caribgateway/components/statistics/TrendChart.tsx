@@ -111,18 +111,32 @@ export default function TrendChart({
                 x2={width - PAD.right}
                 y1={y(t)}
                 y2={y(t)}
-                stroke={t === 0 ? CHART.baseline : CHART.gridline}
+                style={{ stroke: t === 0 ? CHART.baseline : CHART.gridline }}
                 strokeWidth={1}
               />
-              <text x={PAD.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={11} fill={CHART.textMuted}>
+              <text x={PAD.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={11} style={{ fill: CHART.textMuted }}>
                 {t.toLocaleString("en-US")}
               </text>
             </g>
           ))}
 
-          <path d={area} fill={CHART.series} fillOpacity={0.1} />
-          <path d={previous} fill="none" stroke={CHART.previous} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-          <path d={current} fill="none" stroke={CHART.series} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={area} style={{ fill: CHART.series }} fillOpacity={0.1} />
+          <path
+            d={previous}
+            fill="none"
+            style={{ stroke: CHART.previous }}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={current}
+            fill="none"
+            style={{ stroke: CHART.series }}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
           {points.map((p, i) =>
             i % labelEvery === 0 || i === n - 1 ? (
@@ -132,7 +146,7 @@ export default function TrendChart({
                 y={HEIGHT - 8}
                 textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}
                 fontSize={11}
-                fill={CHART.textMuted}
+                style={{ fill: CHART.textMuted }}
               >
                 {p.label}
               </text>
@@ -141,8 +155,20 @@ export default function TrendChart({
 
           {points[peak].value > 0 && (
             <g>
-              <circle cx={x(peak)} cy={y(points[peak].value)} r={4} fill={CHART.series} stroke={CHART.surface} strokeWidth={2} />
-              <text x={x(peak)} y={y(points[peak].value) - 10} textAnchor="middle" fontSize={11} fill={CHART.textSecondary}>
+              <circle
+                cx={x(peak)}
+                cy={y(points[peak].value)}
+                r={4}
+                style={{ fill: CHART.series, stroke: CHART.surface }}
+                strokeWidth={2}
+              />
+              <text
+                x={x(peak)}
+                y={y(points[peak].value) - 10}
+                textAnchor="middle"
+                fontSize={11}
+                style={{ fill: CHART.textSecondary }}
+              >
                 Peak {points[peak].value.toLocaleString("en-US")}
               </text>
             </g>
@@ -150,9 +176,28 @@ export default function TrendChart({
 
           {hover !== null && (
             <g>
-              <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={baseline} stroke={CHART.baseline} strokeWidth={1} />
-              <circle cx={x(hover)} cy={y(points[hover].previous)} r={4} fill={CHART.previous} stroke={CHART.surface} strokeWidth={2} />
-              <circle cx={x(hover)} cy={y(points[hover].value)} r={4} fill={CHART.series} stroke={CHART.surface} strokeWidth={2} />
+              <line
+                x1={x(hover)}
+                x2={x(hover)}
+                y1={PAD.top}
+                y2={baseline}
+                style={{ stroke: CHART.baseline }}
+                strokeWidth={1}
+              />
+              <circle
+                cx={x(hover)}
+                cy={y(points[hover].previous)}
+                r={4}
+                style={{ fill: CHART.previous, stroke: CHART.surface }}
+                strokeWidth={2}
+              />
+              <circle
+                cx={x(hover)}
+                cy={y(points[hover].value)}
+                r={4}
+                style={{ fill: CHART.series, stroke: CHART.surface }}
+                strokeWidth={2}
+              />
             </g>
           )}
         </svg>

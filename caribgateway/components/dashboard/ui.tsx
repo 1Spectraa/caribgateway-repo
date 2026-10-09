@@ -10,7 +10,7 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 /* Surfaces, buttons, and form controls                                      */
 /* ------------------------------------------------------------------------ */
 
-export const cardClass = "rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-sm";
+export const cardClass = "rounded-[var(--radius-card)] bg-white ring-1 ring-slate-200/80 shadow-sm";
 
 const FOCUS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-teal";
@@ -20,7 +20,7 @@ export function buttonClass(
   extra?: string,
 ): string {
   // Size and weight live with each variant, so no two utilities for the same property meet in the CSS.
-  const base = `inline-flex items-center justify-center gap-2 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`;
+  const base = `inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`;
   const variants = {
     primary: "bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-teal-dark",
     secondary:
@@ -78,7 +78,7 @@ export function StatusPill({ tone, children }: { tone: Tone; children: ReactNode
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-pill)] px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
         PILL[tone],
       )}
     >
@@ -134,7 +134,7 @@ export function Notice({
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      className={cx("rounded-2xl px-4 py-3 text-sm leading-6 ring-1 ring-inset", NOTICE[tone])}
+      className={cx("rounded-[var(--radius-card)] px-4 py-3 text-sm leading-6 ring-1 ring-inset", NOTICE[tone])}
     >
       {title && <p className="font-semibold">{title}</p>}
       <div className={title ? "mt-0.5" : undefined}>{children}</div>
@@ -154,7 +154,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
+    <div className="flex flex-col items-center rounded-[var(--radius-card)] border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal/10 text-brand-teal">
         <Icon name={icon} className="h-6 w-6" />
       </span>
@@ -190,7 +190,7 @@ export function StatTile({
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-slate-600">{label}</p>
         {icon && (
-          <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", ACCENT[accent])}>
+          <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-chip)]", ACCENT[accent])}>
             <Icon name={icon} className="h-5 w-5" />
           </span>
         )}
@@ -211,9 +211,9 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={100}
-      className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
+      className="h-2 w-full overflow-hidden rounded-[var(--radius-pill)] bg-slate-100"
     >
-      <div className="h-2 rounded-full bg-brand-teal transition-all" style={{ width: `${clamped}%` }} />
+      <div className="h-2 rounded-[var(--radius-pill)] bg-brand-teal transition-all" style={{ width: `${clamped}%` }} />
     </div>
   );
 }

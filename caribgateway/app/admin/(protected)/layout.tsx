@@ -17,17 +17,10 @@ export default async function ProtectedAdminLayout({
     <div className="flex h-full overflow-hidden">
       <AdminSidebar items={nav} staffName={staff.name} />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
-          <span className="text-sm text-gray-500">CaribGateway &rsaquo; Admin</span>
-          <span className="text-sm text-gray-500">{staff.name}</span>
-        </header>
-
-        {/* Scrollable content */}
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-      </div>
+      {/* The page scrolls here. The top padding clears the phone's menu button. */}
+      <main className="min-w-0 flex-1 overflow-y-auto px-5 pb-16 pt-16 sm:px-8 md:pt-10 lg:px-12">
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }

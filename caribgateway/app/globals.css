@@ -3,6 +3,21 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Shapes. The operator dashboard keeps these soft values; the admin console overrides them below. */
+  --radius-card: 1rem;
+  --radius-control: 9999px;
+  --radius-pill: 9999px;
+  --radius-chip: 0.75rem;
+
+  /* Chart colours, read by components/statistics/palette.ts. These are the public-site values. */
+  --chart-series: #2a78d6;
+  --chart-previous: #898781;
+  --chart-gridline: #e1e0d9;
+  --chart-baseline: #c3c2b7;
+  --chart-surface: #ffffff;
+  --chart-text-secondary: #52514e;
+  --chart-text-muted: #898781;
 }
 
 @theme inline {
@@ -10,7 +25,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
 
+/* Brand colours stay theme variables, not inlined, so the admin console can re-map them below. */
+@theme {
   /* CaribGateway brand palette */
   --color-brand-navy: #1f476c;
   --color-brand-teal: #1f8a8a;
@@ -31,4 +49,69 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+/*
+ * The admin console. Everything inside .admin-console is re-themed here, so the admin pages,
+ * the statistics report and the shared UI take its colours and shapes without per-page classes.
+ * Grey and slate become a warm paper-and-ink scale, brand teal becomes brick, brand navy becomes
+ * ink, and blue (links and notices) becomes brick too. Status colours (green, amber, rose) stay.
+ */
+.admin-console {
+  --color-gray-50: #f6f3ec;
+  --color-gray-100: #efebe2;
+  --color-gray-200: #e3ded2;
+  --color-gray-300: #cdc6b5;
+  --color-gray-400: #767064;
+  --color-gray-500: #5f5a4e;
+  --color-gray-600: #4f4a40;
+  --color-gray-700: #3a414c;
+  --color-gray-800: #262c36;
+  --color-gray-900: #171d27;
+  --color-gray-950: #0f141c;
+
+  --color-slate-50: #f6f3ec;
+  --color-slate-100: #efebe2;
+  --color-slate-200: #e3ded2;
+  --color-slate-300: #cdc6b5;
+  --color-slate-400: #767064;
+  --color-slate-500: #5f5a4e;
+  --color-slate-600: #4f4a40;
+  --color-slate-700: #3a414c;
+  --color-slate-800: #262c36;
+  --color-slate-900: #171d27;
+  --color-slate-950: #0f141c;
+
+  --color-blue-50: #fbefea;
+  --color-blue-100: #f7ddd3;
+  --color-blue-200: #f0c2b2;
+  --color-blue-300: #e8a089;
+  --color-blue-400: #d97e62;
+  --color-blue-500: #c85d42;
+  --color-blue-600: #b8462b;
+  --color-blue-700: #9c3a22;
+  --color-blue-800: #7e2f1c;
+  --color-blue-900: #5f2415;
+  --color-blue-950: #3d170c;
+
+  --color-brand-navy: #171d27;
+  --color-brand-navy-dark: #0f141c;
+  --color-brand-teal: #b8462b;
+  --color-brand-teal-dark: #9c3a22;
+  --color-brand-coral: #ef7a5a;
+  --color-brand-coral-dark: #d9633f;
+  --color-brand-slate: #767064;
+
+  --radius-card: 0.5rem;
+  --radius-control: 0.375rem;
+  --radius-pill: 0.25rem;
+  --radius-chip: 0.375rem;
+
+  --chart-series: #b8462b;
+  --chart-previous: #8a8476;
+  --chart-gridline: #ebe6da;
+  --chart-baseline: #cdc6b5;
+  --chart-surface: #ffffff;
+  --chart-text-secondary: #4f4a40;
+  --chart-text-muted: #5f5a4e;
 }

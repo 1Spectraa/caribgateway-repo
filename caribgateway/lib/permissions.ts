@@ -183,32 +183,50 @@ export function canUseDashboard(granted: readonly string[]): boolean {
   return hasAnyPermission(granted, LISTING_PERMISSIONS);
 }
 
+/** The sidebar's sections, in order. */
+export type AdminNavGroup = "Overview" | "Listings" | "Catalogue" | "Site and access";
+
+/** The icon each section draws in the admin sidebar. */
+export type AdminNavIcon =
+  | "home"
+  | "check"
+  | "building"
+  | "bed"
+  | "chart"
+  | "map"
+  | "globe"
+  | "list"
+  | "tag"
+  | "pencil"
+  | "users";
+
 type NavItem = {
   label: string;
   href: string;
-  icon: string;
+  icon: AdminNavIcon;
+  group: AdminNavGroup;
   /** Visible when the account has any of these. null means every admin account. */
   anyOf: readonly PermissionKey[] | null;
 };
 
 /** The admin panel's sections. Listing work lives in the operator dashboard, not here. */
 const ADMIN_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "▦", anyOf: null },
-  { label: "Approvals", href: "/admin/approvals", icon: "✓", anyOf: ["listings.publish"] },
-  { label: "Businesses", href: "/admin/businesses", icon: "🏢", anyOf: ["listings.manage_all"] },
-  { label: "Accommodations", href: "/admin/accommodations", icon: "🛏", anyOf: ["listings.manage_all"] },
-  { label: "Statistics", href: "/admin/statistics", icon: "📈", anyOf: LISTING_PERMISSIONS },
-  { label: "Destinations", href: "/admin/destinations", icon: "🗺", anyOf: ["catalog.manage"] },
-  { label: "Countries", href: "/admin/countries", icon: "🌍", anyOf: ["catalog.manage"] },
-  { label: "Categories", href: "/admin/categories", icon: "🏷", anyOf: ["catalog.manage"] },
-  { label: "Tags", href: "/admin/tags", icon: "#", anyOf: ["catalog.manage"] },
-  { label: "Site Content", href: "/admin/site", icon: "✎", anyOf: ["site.content"] },
-  { label: "Accounts", href: "/admin/accounts", icon: "👥", anyOf: ["accounts.manage"] },
+  { label: "Dashboard", href: "/admin", icon: "home", group: "Overview", anyOf: null },
+  { label: "Approvals", href: "/admin/approvals", icon: "check", group: "Listings", anyOf: ["listings.publish"] },
+  { label: "Businesses", href: "/admin/businesses", icon: "building", group: "Listings", anyOf: ["listings.manage_all"] },
+  { label: "Accommodations", href: "/admin/accommodations", icon: "bed", group: "Listings", anyOf: ["listings.manage_all"] },
+  { label: "Statistics", href: "/admin/statistics", icon: "chart", group: "Listings", anyOf: LISTING_PERMISSIONS },
+  { label: "Destinations", href: "/admin/destinations", icon: "map", group: "Catalogue", anyOf: ["catalog.manage"] },
+  { label: "Countries", href: "/admin/countries", icon: "globe", group: "Catalogue", anyOf: ["catalog.manage"] },
+  { label: "Categories", href: "/admin/categories", icon: "list", group: "Catalogue", anyOf: ["catalog.manage"] },
+  { label: "Tags", href: "/admin/tags", icon: "tag", group: "Catalogue", anyOf: ["catalog.manage"] },
+  { label: "Site Content", href: "/admin/site", icon: "pencil", group: "Site and access", anyOf: ["site.content"] },
+  { label: "Accounts", href: "/admin/accounts", icon: "users", group: "Site and access", anyOf: ["accounts.manage"] },
 ];
 
 /** The sidebar entries this account can open. */
 export function visibleAdminNav(granted: readonly string[]) {
   return ADMIN_NAV.filter(
     (item) => item.anyOf === null || hasAnyPermission(granted, item.anyOf),
-  ).map(({ label, href, icon }) => ({ label, href, icon }));
+  ).map(({ label, href, icon, group }) => ({ label, href, icon, group }));
 }
